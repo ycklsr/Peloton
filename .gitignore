@@ -1,0 +1,18 @@
+# Data produced by the app — the training log and the backups.
+# This is YOUR data, not code: it has no place on GitHub.
+peloton-*.json
+
+# Personal Xcode settings (window positions, open tabs, schemes)
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Build products
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+*.app
+
+# macOS
+.DS_Store

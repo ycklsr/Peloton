@@ -1,0 +1,3643 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f6f4ee">
+<title>Peloton — CRPE 2027</title>
+<style>
+:root{
+  --bg:#eef0f4; --card:#ffffff; --card2:#f2f4f7; --line:#eef0f3; --card-bd:transparent;
+  --txt:#101828; --dim:#667085; --faint:#98a2b3;
+  --you:#2563eb; --her:#ea580c; --ines:#7c3aed; --thomas:#ca8a04; --ghost:#94a3b8;
+  --ok:#12b76a; --warn:#f79009; --bad:#f04438;
+  /* the chain — GitHub's five steps, to the hex */
+  --ch0:#ebedf0; --ch1:#9be9a8; --ch2:#40c463; --ch3:#30a14e; --ch4:#216e39;
+  /* An alpha mask keeps what is opaque and drops what is transparent, so the
+     bars have to be HOLES, not black paint: a black rect is just as opaque as
+     a white one and masks nothing. One path, evenodd, two rectangles punched
+     out of the square. */
+  --pause-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path fill='%23fff' fill-rule='evenodd' d='M0 0h10v10H0z M3.1 2.5h1.6v5h-1.6z M5.3 2.5h1.6v5h-1.6z'/></svg>");
+  --ch-edge:rgba(27,31,36,.06);
+  --chip-up-bg:#ecfdf3; --chip-up-tx:#027a48;
+  --chip-dn-bg:#fef3f2; --chip-dn-tx:#b42318;
+  --chip-nt-bg:#f2f4f7; --chip-nt-tx:#475467;
+  --amber-bg:#fffaeb; --amber-bd:#fedf89; --amber-tx:#b54708;
+  --grad-you:linear-gradient(135deg,#3b82f6,#1d4ed8);
+  --grad-her:linear-gradient(135deg,#fb923c,#ea580c);
+  --grad-ines:linear-gradient(135deg,#a78bfa,#7c3aed);
+  --grad-thomas:linear-gradient(135deg,#facc15,#ca8a04);
+  --sh:0 1px 2px rgba(16,24,40,.05),0 6px 20px -6px rgba(16,24,40,.08);
+  --r:16px;
+}
+[data-theme="dark"]{
+  --bg:#0e0f13; --card:#171922; --card2:#1e2130; --line:#2a2e40; --card-bd:#2a2e40;
+  --txt:#e8eaf2; --dim:#8b90a5; --faint:#565b70;
+  --you:#4da3ff; --her:#fc5200; --ines:#c084fc; --thomas:#eab308; --ghost:#8b90a5;
+  --ok:#3ecf8e; --warn:#ffb020; --bad:#ff6b6b;
+  --ch0:#161b22; --ch1:#0e4429; --ch2:#006d32; --ch3:#26a641; --ch4:#39d353;
+  --ch-edge:rgba(255,255,255,.05);
+  --chip-up-bg:rgba(62,207,142,.14); --chip-up-tx:#4ade9d;
+  --chip-dn-bg:rgba(255,107,107,.14); --chip-dn-tx:#ff8a8a;
+  --chip-nt-bg:#1e2130; --chip-nt-tx:#8b90a5;
+  --amber-bg:rgba(255,176,32,.12); --amber-bd:rgba(255,176,32,.4); --amber-tx:#ffb020;
+  --sh:none;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+input,select{font-size:16px;font-family:inherit} /* <16px = iOS auto-zoom */
+html,body{background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.45}
+body{padding-bottom:80px}
+.wrap{max-width:600px;margin:0 auto;
+  padding:calc(18px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 20px calc(14px + env(safe-area-inset-left))}
+header.app{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 16px;gap:10px}
+.greet h1{font-size:21px;font-weight:800;letter-spacing:-.01em}
+.greet .sub{font-size:12px;color:var(--dim);font-weight:600;margin-top:2px}
+.theme-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dim);box-shadow:var(--sh);flex:none}
+.card{background:var(--card);border:1px solid var(--card-bd);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--sh)}
+.card h2{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;font-weight:700}
+/* summary */
+.summary{display:flex;gap:12px}
+.summary .sic{width:40px;height:40px;border-radius:99px;flex:none;display:flex;align-items:center;justify-content:center}
+.summary.s-good .sic{background:var(--chip-up-bg);color:var(--chip-up-tx)}
+.summary.s-bad .sic{background:var(--chip-dn-bg);color:var(--chip-dn-tx)}
+.summary.s-warn .sic{background:var(--amber-bg);color:var(--amber-tx)}
+.summary.s-mid .sic{background:var(--chip-nt-bg);color:var(--chip-nt-tx)}
+.summary h3{font-size:15.5px;font-weight:800;flex:1}
+.summary .per{font-size:11px;color:var(--dim);background:var(--card2);padding:4px 10px;border-radius:8px;white-space:nowrap;font-weight:600;flex:none}
+.summary p{font-size:13.5px;color:var(--dim);margin-top:6px;line-height:1.6}
+.summary p b{color:var(--txt);font-weight:700}
+.absence{font-size:12.5px;color:var(--amber-tx);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:12px;padding:10px 13px;margin-bottom:12px}
+/* delta chips */
+.chipd{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chipd.up{background:var(--chip-up-bg);color:var(--chip-up-tx)}
+.chipd.dn{background:var(--chip-dn-bg);color:var(--chip-dn-tx)}
+.chipd.nt{background:var(--chip-nt-bg);color:var(--chip-nt-tx)}
+/* ranking */
+.rank-row{display:flex;align-items:center;gap:11px;padding:11px 2px;border-top:1px solid var(--line)}
+.rank-row:first-of-type{border-top:none}
+.rank-row .pos{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--faint);font-size:12.5px;flex:none;background:var(--card2)}
+.rank-row.r1 .pos{background:linear-gradient(135deg,#fde68a,#f59e0b);color:#7c2d12}
+.rank-row.r2 .pos{background:linear-gradient(135deg,#e5e7eb,#9ca3af);color:#1f2937}
+.rank-row.r3 .pos{background:linear-gradient(135deg,#fed7aa,#ea9a5b);color:#7c2d12}
+.rank-row .mid{flex:1;min-width:0}
+.rank-row .nl{display:flex;align-items:center;gap:6px}
+.rank-row .nm{font-size:14px;font-weight:600}
+.rank-row.me .nm{font-weight:800}
+.rank-row .prof{font-size:10.5px;color:var(--faint);display:block;margin-top:1px}
+.rank-row .gbar{height:6px;border-radius:99px;background:var(--card2);overflow:hidden;margin-top:5px}
+.rank-row .gbar i{display:block;height:100%;border-radius:99px;transition:width .6s ease}
+.rank-row .right{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.rank-row .pp{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.rank-row .dl{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rank-row .mv{font-size:12px;font-weight:800}
+.mv.up{color:var(--ok)} .mv.dn{color:var(--bad)}
+/* countdown */
+.countc{padding:14px 16px}
+.count-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.count-top .lbl{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700}
+/* The number never breaks across lines, and the label yields before it does:
+   "J-" on one line and "32" on the next is not a countdown, it is a defect. */
+.count-top .jj{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--txt);white-space:nowrap;flex:none;padding-left:12px}
+.count-top .lbl{min-width:0}
+.count-strip{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}
+.count-fill{height:100%;border-radius:99px;background:var(--you);transition:width .6s ease}
+.count-sub{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);margin-top:7px;font-variant-numeric:tabular-nums}
+/* chart */
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin-top:10px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+/* tiles */
+/* THE CHAIN — one cell per day of the whole preparation, seven rows deep, one
+   column per week. It is the only place in the app that shows all 237 days at
+   once, and the only one where a day missed is a HOLE in something you built
+   rather than a counter dropping back to zero. A counter punishes; a hole is
+   just a hole, and the wall around it stays standing. */
+.chain-wrap{overflow-x:auto;margin:10px 0 6px;padding-bottom:2px}
+.chain-in{display:flex;gap:4px;min-width:min-content}
+.chain-days{display:grid;grid-template-rows:repeat(7,10px);gap:3px;margin-top:17px;font-size:9px;color:var(--faint)}
+.chain-days div{line-height:10px;text-align:right;padding-right:2px}
+.chain-months{position:relative;height:14px;font-size:9px;color:var(--faint)}
+.chain-months span{position:absolute;top:0}
+.chain{display:grid;grid-auto-flow:column;grid-auto-columns:10px;grid-template-rows:repeat(7,10px);gap:3px}
+.chain i{border-radius:2px;background:var(--ch0);outline:1px solid var(--ch-edge);outline-offset:-1px}
+.chain i.out{background:transparent;outline:none}
+/* The one place this departs from GitHub. GitHub's grid stops at today, so its
+   grey can only mean "nothing that day". Ours runs to April, and painting 200
+   days that have not happened in the colour of a day you missed turns the whole
+   right-hand side into a wall of failure — on day 3, before anything could have
+   gone wrong. Faded, they read "not yet". */
+.chain i.fut{opacity:.4}
+/* A planned rest is a link in the chain, so it is green like the others — and
+   carries a pause, punched out of the fill, so it is never mistaken for a day
+   of work. Two bars at 10 px: 1.6 wide, 5 tall, 2.2 apart. The mask is what
+   makes them show through whatever green the theme supplies. */
+.chain i.rest{background:var(--ch2);outline:1px solid var(--ch-edge);outline-offset:-1px;
+  -webkit-mask-image:var(--pause-mask);mask-image:var(--pause-mask);
+  -webkit-mask-size:100% 100%;mask-size:100% 100%}
+.chain-key i.rest{background:var(--ch2)}
+.chain i.l1{background:var(--ch1)}
+.chain i.l2{background:var(--ch2)}
+.chain i.l3{background:var(--ch3)}
+.chain i.l4{background:var(--ch4)}
+.chain i.today{box-shadow:0 0 0 1.5px var(--txt)}
+.chain-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.chain-top .st{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.chain-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11.5px;color:var(--faint)}
+.chain-key{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.chain-key i{width:10px;height:10px;border-radius:2px;display:inline-block;outline:1px solid var(--ch-edge);outline-offset:-1px}
+/* the three rivals inside one tile: same week, same target, one row each */
+.pk-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.pk-row:last-of-type{margin-bottom:0}
+.pk-row .dot{width:7px;height:7px;border-radius:50%;flex:none}
+.pk-row .nm{font-size:11.5px;width:46px;flex:none}
+.tile .pk-row .bar{flex:1;height:5px;margin:0}
+.pk-row .vv{font-size:11px;font-variant-numeric:tabular-nums;width:44px;text-align:right;flex:none}
+/* roadmap */
+.roadmap .rm-item{display:flex;flex-direction:column;padding:11px 0 2px;border-top:1px solid var(--line)}
+.roadmap .rm-item:first-child{border-top:none;padding-top:0}
+.roadmap .rm-item .t{font-size:14px;font-weight:700;line-height:1.4;
+  padding-left:16px;position:relative}
+.roadmap .rm-item .t::before{content:"";position:absolute;left:0;top:7px;
+  width:7px;height:7px;border-radius:99px;background:var(--you)}
+.roadmap .rm-item .d{font-size:12.5px;color:var(--dim);line-height:1.55;margin-top:3px;padding-left:16px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tile{background:var(--card);border:1px solid var(--card-bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.tile .tl{font-size:11px;color:var(--dim);font-weight:700;margin-bottom:6px;letter-spacing:.02em;line-height:1.35;text-transform:uppercase}
+.tile .tv{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tile .bar{height:7px;border-radius:99px;background:var(--card2);margin:9px 0;overflow:hidden}
+.tile .bar i{display:block;height:100%;border-radius:99px;transition:width .5s ease}
+.tile .tf{display:flex;justify-content:space-between;align-items:flex-start;font-size:10.5px;color:var(--faint);gap:6px;line-height:1.45}
+.tile .tf>span:first-child{min-width:0}
+.tile .tf .chipd{flex:none}
+/* feed */
+.feed .entry{display:flex;gap:11px;padding:12px 2px;border-top:1px solid var(--line)}
+.feed .entry:first-of-type{border-top:none}
+.avatar{width:36px;height:36px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:14px;color:#fff}
+.avatar.m{background:var(--grad-her)}
+.avatar.y{background:var(--grad-you)}
+.avatar.i{background:var(--grad-ines)}
+.avatar.t{background:var(--grad-thomas)}
+.entry .body{flex:1;min-width:0}
+.entry .top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--dim)}
+.entry .top span:first-child{font-weight:700;color:var(--txt)}
+.entry .top .d{font-variant-numeric:tabular-nums}
+.entry .label{font-size:13.5px;margin-top:2px}
+.entry .meta{font-size:12px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
+/* The duration gets its own column, because it is the one thing the feed is
+   actually reporting. It used to sit in the grey meta line while the START
+   TIME sat up top in the same "4 h 25" shape — so the least useful number was
+   the loudest, and the two could not be told apart. Clock times now read 17:55
+   and live with the date; durations keep h/min and stand alone here. */
+.entry .dur{flex:none;text-align:right;padding-left:8px;font-size:15px;font-weight:800;
+  color:var(--txt);font-variant-numeric:tabular-nums;white-space:nowrap}
+.entry .dur .del{display:block;margin-left:auto;padding:5px 0 0}
+.entry .note{font-size:12.5px;color:var(--dim);font-style:italic;margin-top:7px;padding:8px 11px;
+  background:var(--card2);border-radius:4px 12px 12px 4px;border-left:3px solid var(--faint)}
+.morebtn{width:100%;padding:11px;background:none;border:1.5px dashed var(--line);border-radius:12px;color:var(--dim);font-size:13px;cursor:pointer;margin-top:10px;font-weight:600}
+/* timer */
+.chrono{display:flex;flex-direction:column;align-items:center;padding:32px 0 12px}
+.bigbtn{width:196px;height:196px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--grad-you);color:#fff;
+  font-size:16px;font-weight:800;letter-spacing:.05em;
+  box-shadow:0 0 0 12px rgba(37,99,235,.08),0 18px 40px -12px rgba(29,78,216,.45)}
+.bigbtn.on{background:var(--grad-her);box-shadow:0 0 0 12px rgba(234,88,12,.09),0 18px 40px -12px rgba(194,65,12,.45)}
+.bigbtn .t{display:block;font-size:36px;font-variant-numeric:tabular-nums;font-weight:900;margin-top:4px}
+.chrono .hint{color:var(--dim);font-size:12.5px;margin-top:18px;text-align:center}
+.linklike{background:none;border:none;color:var(--dim);text-decoration:underline;font-size:12.5px;cursor:pointer;margin-top:14px}
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(16,24,40,.5);backdrop-filter:blur(3px);display:none;z-index:40}
+.sheet-bg.open{display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:600px;padding:20px 18px 28px;box-shadow:0 -12px 40px rgba(16,24,40,.2);max-height:86vh;overflow-y:auto;border:1px solid var(--card-bd)}
+.sheet h3{font-size:16px;margin-bottom:4px;font-weight:800}
+.sheet .sub{font-size:12.5px;color:var(--dim);margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+/* THE APPOINTMENT.
+   The only part of this app that speaks BEFORE the decision instead of
+   reporting on it afterwards. Everything else — the standing, the chain, the
+   feed — tells you what already happened. */
+.rdv-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rdv-top .st{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.rdv-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.rdv-row .lb{font-size:11px;color:var(--dim);font-weight:700;width:100%;margin-bottom:1px}
+.rdvchip{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card2);
+  color:var(--txt);font-size:12.5px;cursor:pointer;font-weight:700;font-variant-numeric:tabular-nums}
+.rdvchip.sel{background:var(--you);border-color:var(--you);color:#fff}
+.rdv-off{background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;
+  padding:8px 0 0;text-decoration:underline;text-underline-offset:3px}
+/* CHAPTER TILES.
+   This used to be a <select>: ten chapters with long names, collapsed into one
+   line showing "—". Choosing which chapter to keep alive is a decision that
+   needs the state of all of them at once — which are consolidated, which are
+   crumbling — and a dropdown hides exactly that until after you have opened
+   it. The colour IS the information; the tile is only its carrier. */
+.chapgrid{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 14px;
+  max-height:216px;overflow-y:auto;padding-right:2px}
+@media(min-width:560px){.chapgrid{grid-template-columns:1fr 1fr}}
+.chapchip{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;
+  border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:12.5px;
+  cursor:pointer;text-align:left;font-weight:600;line-height:1.25;width:100%}
+.chapchip .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--faint)}
+.chapchip .nm{flex:1;min-width:0}
+.chapchip .st{font-size:10.5px;font-weight:700;color:var(--dim);white-space:nowrap}
+.chapchip.s1 .dot{background:var(--you)}
+.chapchip.s2 .dot{background:var(--ok)}
+.chapchip.s2 .st{color:var(--ok)}
+.chapchip.ero .dot{background:var(--warn)}
+.chapchip.ero{border-color:var(--warn)}
+.chapchip.ero .st{color:var(--warn)}
+/* Selection is a ring, not a fill: filling the tile would hide the very colour
+   that made you pick it. */
+.chapchip.sel{border-color:var(--you);box-shadow:inset 0 0 0 2px var(--you)}
+.chip{padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:13px;cursor:pointer;font-weight:600}
+.chip.sel{background:var(--you);border-color:var(--you);color:#fff}
+.sheet label.fld{display:block;font-size:12px;color:var(--dim);margin:10px 0 5px;font-weight:600}
+.sheet select,.sheet input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:16px}
+.btnrow{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:14px;border-radius:12px;border:none;font-size:14.5px;font-weight:800;cursor:pointer}
+.btn.primary{background:var(--you);color:#fff}
+.btn.ghost{background:var(--card2);color:var(--dim)}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(3px);display:none;z-index:50;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 24px 60px -12px rgba(16,24,40,.35);border:1px solid var(--card-bd)}
+.modal h3{font-size:16px;margin-bottom:2px;font-weight:800}
+.modal .sub{font-size:12px;color:var(--dim);margin-bottom:10px}
+.db-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px;font-variant-numeric:tabular-nums}
+.db-row .avatar{width:28px;height:28px;font-size:11.5px}
+.db-row .n{flex:1;font-weight:600}
+.db-row .hh{width:64px;text-align:right;font-weight:700}
+.db-row .dp{text-align:right}
+.verdict{margin-top:14px;font-size:13px;color:var(--dim);font-style:italic;background:var(--card2);padding:10px 13px;border-radius:12px}
+/* syllabus */
+.covbar{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;margin:10px 0 8px}
+.covbar i{display:block;height:100%;border-radius:99px;background:var(--you);transition:width .6s ease}
+.chapgroup{margin-bottom:6px}
+.chapgroup h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:16px 0 6px;font-weight:700}
+.chap{display:flex;align-items:center;gap:11px;padding:10px 4px;border-top:1px solid var(--line);cursor:pointer}
+.chap .box{width:22px;height:22px;border-radius:8px;border:1.5px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--card2)}
+.chap.s1 .box{border-color:var(--warn);color:#fff;background:linear-gradient(135deg,#fbbf24,#d97706)}
+.chap.s2 .box{border-color:var(--ok);color:#fff;background:linear-gradient(135deg,#34d399,#059669)}
+.chap .nm{flex:1;font-size:13.5px}
+.chap.s0 .nm{color:var(--dim)}
+.chap .st{font-size:11px;color:var(--faint);text-align:right}
+.chap.s1 .st{color:var(--warn)} .chap.s2 .st{color:var(--ok)}
+.chap .st.ero{color:var(--amber-tx);font-style:italic;background:var(--amber-bg);padding:2px 7px;border-radius:99px}
+.covline{font-size:12.5px;color:var(--dim)}
+.covline b{color:var(--txt)}
+/* past papers */
+.ann-item{display:flex;justify-content:space-between;padding:11px 2px;border-top:1px solid var(--line);font-size:13.5px;font-variant-numeric:tabular-nums}
+.ann-item span{color:var(--dim)}
+form.ann input{margin-bottom:8px}
+#pg-ann input,#pg-ann select{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:16px}
+#pg-ann label.fld{display:block;font-size:12px;color:var(--dim);margin:10px 0 5px;font-weight:600}
+/* stats */
+.sgrid{display:flex;align-items:flex-end;gap:6px;height:110px;margin:10px 0 4px}
+.scol{flex:1;display:flex;gap:2px;align-items:flex-end;height:100%}
+.sbar{flex:1;border-radius:3px 3px 0 0;min-height:2px}
+.sbar.y{background:var(--grad-you)} .sbar.m{background:var(--grad-her)}
+.sbar.i{background:var(--grad-ines)} .sbar.t{background:var(--grad-thomas)}
+.slabels{display:flex;gap:6px;font-size:10px;color:var(--faint);text-align:center}
+.slabels div{flex:1}
+/* trends */
+.tsec{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:10px 0 2px}
+.tsec:first-child{margin-top:0}
+.trend-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.trend-row .dot{width:8px;height:8px;border-radius:99px;flex:none}
+.trend-row .lb{flex:1;font-weight:600;min-width:0}
+.trend-row .vv{font-variant-numeric:tabular-nums;font-weight:700}
+/* settings */
+.set-row{padding:13px 2px;border-top:1px solid var(--line)}
+.set-row:first-of-type{border-top:none}
+.set-row .t{font-size:13.5px;margin-bottom:6px;font-weight:700}
+.set-row .d{font-size:12px;color:var(--dim);margin-bottom:8px}
+.sbtn{padding:10px 15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:13px;cursor:pointer;margin-right:8px;font-weight:600;box-shadow:var(--sh)}
+.sbtn.sel{border-color:var(--you);color:var(--you);font-weight:800}
+.sbtn.danger{color:var(--bad);border-color:var(--chip-dn-bg);background:var(--chip-dn-bg)}
+.expl{font-size:12.5px;color:var(--dim);line-height:1.6}
+/* tabs */
+nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 20px rgba(16,24,40,.05)}
+nav.tabs button{flex:1;background:none;border:none;color:var(--faint);font-size:10.5px;font-weight:700;padding:9px 0 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button.act{color:var(--you)}
+.page{display:none}.page.act{display:block}
+/* onboarding */
+.onb{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.onb.open{display:flex}
+.onb .inner{max-width:440px;text-align:center;margin:auto;background:var(--card);border:1px solid var(--card-bd);border-radius:22px;padding:26px 22px;box-shadow:var(--sh)}
+.onb .vs{font-size:11px;letter-spacing:.2em;color:var(--faint);margin:0 4px;font-weight:800}
+.onb .names{display:flex;justify-content:center;gap:16px;align-items:center;flex-wrap:wrap}
+.onb .p{font-size:14px;color:var(--dim);margin:18px 0 22px;line-height:1.65;text-align:left}
+.onb .p b{color:var(--txt)}
+.onb .avatar{width:50px;height:50px;font-size:20px;margin:0 auto 6px}
+.onb .nm{font-size:12.5px;font-weight:800}
+.banner{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber-tx);font-size:12.5px;padding:10px 13px;border-radius:12px;margin-bottom:12px;display:none}
+.tap-note{font-size:11.5px;color:var(--faint);margin-top:8px}
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(8px);bottom:calc(74px + env(safe-area-inset-bottom));background:var(--txt);color:var(--bg);padding:11px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(16,24,40,.25);z-index:70;display:flex;gap:14px;align-items:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:92vw}
+.toast.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.toast button{background:none;border:none;color:#93c5fd;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+[data-theme="dark"] .toast button{color:#1d4ed8}
+/* deletion */
+.del{background:none;border:none;color:var(--faint);cursor:pointer;padding:2px 0 2px 8px}
+.del:hover{color:var(--bad)}
+.del svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+.ann-item .del{margin-left:8px}
+/* paused timer */
+.bigbtn.paused{background:linear-gradient(135deg,#f59e0b,#b45309);box-shadow:0 0 0 12px rgba(245,158,11,.10),0 18px 40px -12px rgba(180,83,9,.45)}
+
+</style>
+</head>
+<body>
+<div class="banner" id="syncBanner" style="background:var(--chip-dn-bg);border-color:var(--bad);color:var(--bad);font-weight:700"></div>
+
+<div class="onb" id="onb">
+  <div class="inner">
+    <div class="names">
+      <div><div class="avatar y">Y</div><div class="nm">Toi</div></div>
+      <div class="vs">VS</div>
+      <span id="onbNames"></span>
+    </div>
+    <div class="p" id="onbText"></div>
+    <button class="btn primary" style="width:100%" id="onbGo">Commencer</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="app">
+    <div class="greet">
+      <h1 id="greeting">Bonjour, Yannick</h1>
+      <div class="sub">Peloton CRPE 2027 · La Réunion · bac+3</div>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="Basculer clair / sombre"></button>
+  </header>
+
+  <!-- RANKING PAGE -->
+  <section class="page act" id="pg-duel">
+    <div class="absence" id="absence" style="display:none"></div>
+    <div class="card summary" id="summaryCard">
+      <div class="sic" id="sumIc"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <h3 id="sumTitle">—</h3>
+          <span class="per">7 derniers jours</span>
+        </div>
+        <p id="sumTxt"></p>
+      </div>
+    </div>
+    <div class="card" id="rdvCard">
+      <h2>Ton rendez-vous</h2>
+      <div id="rdvBody"></div>
+    </div>
+    <div class="card">
+      <h2>Discipline</h2>
+      <div class="chain-top"><span class="st" id="chainStreak">—</span><span id="chainToday"></span></div>
+      <div class="chain-wrap"><div class="chain-in">
+        <div class="chain-days" id="chainDays"></div>
+        <div>
+          <div class="chain-months" id="chainMonths"></div>
+          <div class="chain" id="chainGrid"></div>
+        </div>
+      </div></div>
+      <div class="chain-foot">
+        <span id="chainFoot"></span>
+        <span class="chain-key">moins <i style="background:var(--ch0)"></i><i style="background:var(--ch1)"></i><i style="background:var(--ch2)"></i><i style="background:var(--ch3)"></i><i style="background:var(--ch4)"></i> plus</span>
+      </div>
+    </div>
+    <div class="card"><h2>Classement — heures travaillées</h2><div id="ranking"></div></div>
+    <div class="card countc">
+      <div class="count-top"><span class="lbl">Écrits CRPE</span><b class="jj" id="countdown">—</b></div>
+      <div class="count-strip"><div class="count-fill" id="countFill" style="width:0%"></div></div>
+      <div class="count-sub"><span id="elapsedTxt"></span><span id="examTxt"></span></div>
+    </div>
+    <div class="card countc" id="annCount" style="display:none">
+      <div class="count-top"><span class="lbl" id="annCountLbl">Annale — compte à rebours</span><b class="jj" id="annCountdown">—</b></div>
+      <div class="count-strip"><div class="count-fill" id="annCountFill" style="width:0%"></div></div>
+      <div class="count-sub"><span id="annCountSub"></span><span id="annCountDate"></span></div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <div class="card feed">
+      <h2>Activité</h2>
+      <div id="feed"></div>
+      <button class="morebtn" id="moreFeed" style="display:none">Voir plus</button>
+    </div>
+  </section>
+
+  <!-- TIMER PAGE -->
+  <section class="page" id="pg-chrono">
+    <div class="chrono">
+      <button class="bigbtn" id="timerBtn">DÉMARRER<span class="t" id="timerT">0:00</span></button>
+      <button class="linklike" id="pauseBtn" style="display:none">Mettre en pause</button>
+      <div class="hint">Le temps est mesuré, pas déclaré.<br>Démarre, révise, coupe. Deux taps et c'est enregistré.</div>
+      <button class="linklike" id="manualAdd">Ajouter une session oubliée</button>
+    </div>
+    <div class="card" id="todayCard">
+      <h2>Aujourd'hui</h2>
+      <div id="todayList" style="font-size:13.5px"></div>
+    </div>
+  </section>
+
+  <!-- SYLLABUS PAGE -->
+  <section class="page" id="pg-prog">
+    <div class="card">
+      <h2>Couverture du programme</h2>
+      <div class="covbar"><i id="covFill" style="width:0%"></i></div>
+      <div class="covline">Traité : <b id="covT">—</b> · Consolidé : <b id="covC">—</b> · En érosion : <b id="covEro">—</b> · Attendu : <b id="covE">—</b></div>
+      <div class="tap-note">Tape un chapitre : vide → traité → consolidé. Un chapitre non retouché depuis 3 semaines s'effrite — le retravailler (ou loguer une session dessus) le répare.</div>
+    </div>
+    <div class="card" id="progList"></div>
+  </section>
+
+  <!-- PAST PAPERS PAGE -->
+  <section class="page" id="pg-ann">
+    <div class="card">
+      <h2>Annales en conditions réelles</h2>
+      <div class="expl" style="margin-bottom:10px">Une annale complète par semaine, sur deux jours, aux durées et aux coefficients réels du concours : le samedi les écrits — 4 h de français-mathématiques puis 4 h sur trois domaines — le dimanche les oraux, l'exposé disciplinaire et l'épreuve d'EPS-entretien. Dix heures quarante d'examen. C'est un relevé, pas un modèle : ces notes ne pilotent aucun chiffre ailleurs dans l'app, elles gardent trace de ce que tu vaux en conditions réelles. Le temps passé, lui, se logue au chrono, type « annale ».</div>
+      <div class="covline" id="nextAnn" style="margin-bottom:12px"></div>
+      <form class="ann" id="annForm">
+        <div id="annWhich" style="font-size:13px;color:var(--dim);margin-bottom:10px;line-height:1.55"></div>
+        <label class="fld">Épreuve 1 — français et mathématiques <span style="color:var(--faint)">· coef 5 · 4 h</span></label><input type="number" id="annE1" min="0" max="20" step="0.25" placeholder="—">
+        <label class="fld">Épreuve 2 — trois domaines au choix <span style="color:var(--faint)">· coef 3 · 4 h</span></label><input type="number" id="annE2" min="0" max="20" step="0.25" placeholder="—">
+        <label class="fld">Oral 1 — oral disciplinaire, français ou maths <span style="color:var(--faint)">· coef 5 · 1 h 45</span></label><input type="number" id="annO1" min="0" max="20" step="0.25" placeholder="—">
+        <label class="fld">Oral 2 — EPS et entretien <span style="color:var(--faint)">· coef 3 · 55 min</span></label><input type="number" id="annO2" min="0" max="20" step="0.25" placeholder="—">
+        <div class="btnrow"><button class="btn primary" type="submit">Enregistrer</button></div>
+      </form>
+      <div id="annClosed" style="display:none;font-size:13.5px;color:var(--dim);line-height:1.6"></div>
+    </div>
+    <div class="card"><h2>Historique</h2><div id="annList"></div></div>
+  </section>
+
+  <!-- MORE PAGE -->
+  <section class="page" id="pg-plus">
+    <div class="card">
+      <h2>Tendances — 30 jours</h2>
+      <div id="trends"></div>
+    </div>
+    <div class="card">
+      <h2>Volume hebdo — 8 dernières semaines</h2>
+      <div class="sgrid" id="statBars"></div>
+      <div class="slabels" id="statLabels"></div>
+      <div class="legend" id="legendStats"></div>
+    </div>
+    <div class="card">
+      <h2>Totaux</h2>
+      <div id="totals" style="font-size:13.5px;line-height:1.9"></div>
+    </div>
+    <div class="card">
+      <h2>Jalons</h2>
+      <div id="milestones"></div>
+    </div>
+    <div class="card">
+      <h2>Prochaines fonctionnalités</h2>
+      <div class="roadmap">
+        <div class="rm-item">
+          <div class="t">Page de statistiques sur les annales</div>
+          <div class="d">Notes, tendance, écart entre écrits et oraux, épreuves qui décrochent. Pas de comparaison au peloton — cette page-là ne parle que de toi.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Réglages</h2>
+      <div class="set-row">
+        <div class="t">Apparence</div>
+        <div class="d">Le mode sombre restaure la palette d'origine.</div>
+        <button class="sbtn" id="thLight">Clair</button>
+        <button class="sbtn" id="thDark">Sombre</button>
+      </div>
+      <div class="set-row">
+        <div class="t">Objectif de travail quotidien</div>
+        <div class="d">Le nombre de minutes visé chaque jour. C'est ce que mesure l'anneau du widget sur l'écran verrouillé. Sans effet sur le modèle ni sur la série — la série garde son plancher de 20 min, qui est le minimum pour qu'une journée compte, pas un objectif.</div>
+        <input type="number" id="dailyTargetInp" min="5" max="480" step="5" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">min / jour</span>
+      </div>
+      <div class="set-row">
+        <div class="t" id="refTotalTit">Rythme conseillé pour le CRPE</div>
+        <div class="d">Le volume total auquel le modèle compare le tien — toi <b>et</b> le peloton. Par défaut 1 000 h, juste au-dessus de la fourchette sur laquelle les organismes de préparation convergent (600 à 900 h pour neuf à douze mois) — un nombre rond et un cran d'exigence en plus, choisi et non déduit. Aucune enquête publique ne mesure ce que font réellement les candidats ; c'est un conseil, pas une mesure — d'où ce réglage. C'est un total et non un rythme hebdomadaire, parce que c'est ainsi que les sources l'énoncent, et parce que le chiffre affiché sur la tuile vaut alors exactement ce nombre quelle que soit la longueur de ta préparation.</div>
+        <input type="number" id="refTotalInp" min="50" max="3000" step="10" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">h au total</span>
+        <div class="d" id="refTotalImp" style="margin-top:6px"></div>
+      </div>
+      <div class="set-row">
+        <div class="t">Date des écrits</div>
+        <div class="d">Prévisionnel : fin mars – début avril 2027. Ajuste quand l'arrêté officiel tombe (devenirenseignant.gouv.fr).</div>
+        <input type="date" id="examDate" style="max-width:200px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)">
+      </div>
+      <div class="set-row">
+        <div class="t">Synchronisation</div>
+        <div class="d">Tes données sont d'abord sauvegardées sur cet appareil : l'app fonctionne hors ligne, et rien ne se perd si iCloud est indisponible. Le dossier partagé sert à les porter jusqu'à ton autre appareil. Chaque appareil y écrit son propre fichier et lit ceux des autres : le travail fait des deux côtés se réunit, il ne s'écrase jamais.</div>
+        <div class="covline" id="loadedState" style="margin-top:10px"></div>
+        <div id="syncNative" style="display:none;margin-top:12px">
+          <div class="d" id="syncNativeStatus"></div>
+          <button class="sbtn" id="chooseSyncBtn">Choisir le dossier de sync…</button>
+          <button class="sbtn" id="syncNowBtn">Synchroniser maintenant</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="t">Notifications système (Mac + iPhone)</div>
+        <div class="d" id="notifExpl">Automatiques, rien à régler : le plan des 10 prochains jours — les séances du peloton, les dépassements qui se préparent — est reprogrammé à chaque action et à chaque ouverture de l'app. Il suffit d'avoir accepté les notifications au premier lancement (sinon : Réglages système → Notifications → Peloton).</div>
+      </div>
+      <div class="set-row">
+        <div class="t">Comment le conseillé est établi</div>
+        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. La forme de la courbe (démarrage doux, poussée aux deux tiers, effort avant les écrits, décrue sur la dernière quinzaine) est une convention, remise à l'échelle du total que tu choisis. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. <b>Il n'y a plus de probabilité d'admission</b> : elle reposait sur des constantes choisies et non validées, elle démarrait au taux d'admission avant que tu aies travaillé une heure, et aucune explication ne pouvait la rendre lisible. Ce que tu vois maintenant, tu peux le vérifier contre ta propre montre. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
+      </div>
+      <div class="set-row">
+        <div class="t" style="color:#ff6b6b">Zone dangereuse</div>
+        <div class="d">Tout effacer : ton historique, le leur, le peloton entier. Ils ne reviendront pas les mêmes.</div>
+        <button class="sbtn danger" id="resetBtn">Réinitialiser</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- SESSION LOG SHEET -->
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet">
+    <h3 id="sheetTitle">Session terminée</h3>
+    <div class="sub" id="sheetSub"></div>
+    <div id="manualFields" style="display:none">
+      <label class="fld">Durée (minutes)</label><input type="number" id="mMin" min="5" max="480" placeholder="ex. 45">
+    </div>
+    <label class="fld">Matière</label>
+    <div class="chips" id="matChips"></div>
+    <label class="fld">Type de travail</label>
+    <div class="chips" id="typeChips"></div>
+    <label class="fld">Chapitre (optionnel — entretient ta couverture)</label>
+    <div class="chapgrid" id="chapGrid"></div>
+    <div class="btnrow">
+      <button class="btn ghost" id="sheetCancel">Annuler</button>
+      <button class="btn primary" id="sheetSave">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBRIEF MODAL -->
+<div class="modal-bg" id="debriefBg">
+  <div class="modal">
+    <h3>Débrief de la semaine</h3>
+    <div class="sub" id="dbSub"></div>
+    <div id="dbRows"></div>
+    <div class="verdict" id="dbVerdict"></div>
+    <div class="btnrow"><button class="btn primary" id="dbClose">Vu</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" style="display:none"></button></div>
+
+<nav class="tabs">
+  <button data-pg="duel" class="act"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 6-8 3 4"/></svg>Peloton</button>
+  <button data-pg="chrono"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>Chrono</button>
+  <button data-pg="prog"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Programme</button>
+  <button data-pg="ann"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5"/></svg>Annales</button>
+  <button data-pg="plus"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Plus</button>
+</nav>
+
+<script>
+"use strict";
+const W = (typeof window!=="undefined")?window:globalThis;
+
+/* ================= UTILS ================= */
+function pad(n){return n<10?"0"+n:""+n}
+function d2s(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function s2d(s){const p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2],12,0,0)}
+function todayStr(){return d2s(new Date())}
+function addDays(s,n){const d=s2d(s);d.setDate(d.getDate()+n);return d2s(d)}
+function daysBetween(a,b){return Math.round((s2d(b)-s2d(a))/86400000)}
+function dow(s){return s2d(s).getDay()} // 0=Sun
+const MOIS=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
+function fmtDate(s){const d=s2d(s);return JOURS[d.getDay()]+" "+d.getDate()+" "+MOIS[d.getMonth()]}
+function fmtH(min){min=Math.round(min);const h=Math.floor(min/60),m=min%60;
+  if(h===0)return m+" min";return h+" h"+(m?" "+pad(m):"")}
+function isoWeek(s){const d=s2d(s);const t=new Date(d);t.setDate(t.getDate()+3-((t.getDay()+6)%7));
+  const w1=new Date(t.getFullYear(),0,4);
+  return t.getFullYear()+"-S"+pad(1+Math.round(((t-w1)/86400000-3+((w1.getDay()+6)%7))/7))}
+function mondayOf(s){const d=s2d(s);const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);return d2s(d)}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+function hashStr(str){let h=1779033703;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function rng(seed,tag){return mulberry32((seed^hashStr(tag))>>>0)}
+
+/* ================= CONSTANTS ================= */
+/* THE SHARED PAPER. Every candidate in the peloton sits it, on the same day,
+   at the same hour, whatever the weekday — a concours blanc is a collective
+   event, not a slot each person picks. It is the first moment the standing
+   rests on a mark instead of on hours, which is why it gets a countdown of
+   its own.
+   Its date is ONE MONTH after the peloton starts, not a date written down
+   here. A fixed one was correct for exactly one starting day: reset in
+   October and 15 September is in the past, so the shared paper quietly
+   ceases to exist and the countdown card disappears with it. */
+/* THE SHARED PAPER, in the shape of the real thing.
+   One paper is TWO days. Day one is the whole of the admissibility: the
+   four-hour French-and-maths paper, then the four-hour paper on three chosen
+   domains, sat at the hours a real centre convenes — 9 h to 13 h, a break,
+   14 h 30 to 18 h 30. Day two is the whole of the admission: an hour of
+   preparation, a forty-five minute lesson and discussion, twenty minutes of
+   PE and a thirty-five minute professional interview.
+   Ten hours forty of examination, once a week from the thirtieth day. That is
+   forty percent of the advised weekly rhythm spent under exam conditions,
+   which is what "at least a third in timed simulation" costs when you count
+   it honestly. */
+const ANNALE1_DAY=30, ANNALE_EVERY=7;
+const ANNALE_J1=[["É1 — français et mathématiques",9,0,240],
+                 ["É2 — trois domaines au choix",14,30,240]];
+const ANNALE_J2=[["Oral 1 — préparation",9,0,60],
+                 ["Oral 1 — exposé et échange",10,0,45],
+                 ["Oral 2 — EPS",11,0,20],
+                 ["Oral 2 — entretien",11,30,35]];
+const ANNALE_MIN=ANNALE_J1.concat(ANNALE_J2).reduce((a,x)=>a+x[3],0);
+const ANNALE1_H=ANNALE_J1[0][1];
+/* The real coefficients: 5 and 3 for the two written papers, 5 and 3 for the
+   two orals, sixteen in all. A paper sat only in part is scored on the parts
+   that were sat rather than penalised for the rest — the Saturday evening
+   figure has to mean something before Sunday. */
+const ANN_COEF={e1:5, e2:3, o1:5, o2:3};
+function annScore(a){
+  let sum=0,w=0;
+  for(const k in ANN_COEF)if(a[k]!=null){sum+=ANN_COEF[k]*a[k];w+=ANN_COEF[k]}
+  return w?sum/w:null;
+}
+function annFull(a){return a.e1!=null&&a.e2!=null&&a.o1!=null&&a.o2!=null}
+/* Which paper today belongs to, and which of its two days this is. */
+function todayAnnale(){
+  const t=todayStr();
+  if(isShared(t))return {date:t,day:1};
+  if(isSharedDay2(t))return {date:addDays(t,-1),day:2};
+  return null;
+}
+/* Minutes that make a day count towards the streak. */
+const STREAK_MIN=20;
+/* Work used to be weighted by type — an hour of past paper counted 1.3, an
+   hour of re-reading 0.7. It is not any more: an hour is an hour. The weights
+   were a judgment about what learning is worth, made by nobody who has
+   measured it, and they put every figure on screen at one remove from the
+   stopwatch. "62 h pondérées" is a number you cannot check against your own
+   memory of the week; "62 h" is. The types are still recorded, and still
+   shown in the feed — they describe the session, they no longer price it. */
+const TYPES=[["exercices","Exercices"],["cours","Cours / apprentissage"],["annale","Annale chronométrée"],["fiches","Fiches"],["relecture","Relecture"]];
+const MATS=[["fr","Français"],["ma","Maths"],["e2","Épreuve 2 (domaines)"],["oral","Oral"]];
+
+const CHAPS=[
+ {id:"f1", g:"É1 · Français", n:"Grammaire : classes de mots et fonctions"},
+ {id:"f2", g:"É1 · Français", n:"Grammaire : phrase simple et complexe"},
+ {id:"f3", g:"É1 · Français", n:"Conjugaison : morphologie verbale"},
+ {id:"f4", g:"É1 · Français", n:"Valeurs des temps et des modes"},
+ {id:"f5", g:"É1 · Français", n:"Orthographe : accords et chaînes d'accord"},
+ {id:"f6", g:"É1 · Français", n:"Orthographe lexicale et homophones"},
+ {id:"f7", g:"É1 · Français", n:"Lexique : formation et sens des mots"},
+ {id:"f8", g:"É1 · Français", n:"Compréhension et analyse de textes"},
+ {id:"f9", g:"É1 · Français", n:"Production écrite et réflexion"},
+ {id:"f10",g:"É1 · Français", n:"Méthodologie de l'épreuve (partie français)"},
+ {id:"m1", g:"É1 · Maths", n:"Nombres entiers et numération"},
+ {id:"m2", g:"É1 · Maths", n:"Fractions et nombres décimaux"},
+ {id:"m3", g:"É1 · Maths", n:"Calcul littéral et équations"},
+ {id:"m4", g:"É1 · Maths", n:"Proportionnalité et pourcentages"},
+ {id:"m5", g:"É1 · Maths", n:"Organisation de données, probas & stats"},
+ {id:"m6", g:"É1 · Maths", n:"Géométrie plane"},
+ {id:"m7", g:"É1 · Maths", n:"Géométrie dans l'espace"},
+ {id:"m8", g:"É1 · Maths", n:"Grandeurs et mesures"},
+ {id:"m9", g:"É1 · Maths", n:"Résolution de problèmes + méthodo"},
+ {id:"e1", g:"É2 · Trois domaines au choix (cycle 4)", n:"Histoire-géographie · EMC", dom:true},
+ {id:"e2", g:"É2 · Trois domaines au choix (cycle 4)", n:"Sciences et technologie", dom:true},
+ {id:"e3", g:"É2 · Trois domaines au choix (cycle 4)", n:"Arts", dom:true},
+ {id:"e4", g:"É2 · Trois domaines au choix (cycle 4)", n:"Langue vivante étrangère", dom:true},
+ {id:"e5", g:"É2 · Trois domaines au choix (cycle 4)", n:"Méthodologie de l'épreuve 2"},
+ {id:"o1", g:"Admission (après les écrits)", n:"Leçon : français ou maths", oral:true},
+ {id:"o2", g:"Admission (après les écrits)", n:"Entretien : motivation, parcours, valeurs", oral:true}
+];
+const ECRIT_UNITS=23;
+
+const PIQUES=[
+ "Première semaine bouclée. C'est plus simple que prévu.",
+ "La BU du Moufia est vide le samedi matin. Tant mieux.",
+ "J'ai croisé quelqu'un qui « révisera en mars ». Bon courage à lui.",
+ "Les accords du participe passé, c'est cadeau. Des points faciles.",
+ "Il fait 31° dehors. Je suis en salle clim, fiche de grammaire.",
+ "Quelqu'un a lâché la prépa dans ma promo. Un dossier de moins.",
+ "Mon planning tient. Celui des autres, je ne sais pas.",
+ "Proportionnalité pliée. C'était le chapitre qui me faisait peur.",
+ "73 postes. Je compte être dedans, pas au bord.",
+ "Les annales sont plus dures que ce qu'on raconte. Ça me va.",
+ "Dimanche soir, 1 h 30. Personne ne le fait. C'est bien pour ça que je le fais.",
+ "J'ai refait mes fiches de conjugaison. Deuxième passage, tout tient.",
+ "Le graphique de régularité, c'est le seul avis qui m'intéresse.",
+ "Grandeurs et mesures : moins drôle que prévu. Fait quand même.",
+ "L'écart se creuse ou se resserre. Dans les deux cas, je continue.",
+ "J'ai chronométré ma rédaction : 55 minutes. Objectif : 45.",
+ "Sciences et techno cycle 4 : plus rapide que prévu.",
+ "Océan ce matin, grammaire cet après-midi. Équilibre.",
+ "On m'a demandé si j'étais « sûre d'avoir le niveau ». On verra en juin.",
+ "Deux chapitres consolidés cette semaine. Le reste suit.",
+ "Le concours ne récompense pas le talent. Il récompense ce que je suis en train de faire.",
+ "Réveil 5 h 45. À 8 h j'avais déjà fait ma session.",
+ "J'ai relu mes erreurs d'il y a un mois. Plus aucune ne résiste.",
+ "Samedi, tout le monde est à la plage. J'y serai en juillet.",
+ "Un chapitre par semaine, même malade, même fatiguée. C'est le contrat.",
+ "Ma moyenne d'heures monte doucement. C'est exactement le plan.",
+ "Les stats de l'académie sont violentes. Tant mieux : ça décourage les autres.",
+ "J'ai testé réviser sans téléphone dans la pièce. Écart de productivité gênant.",
+ "Le chapitre que je détestais est devenu celui où je suis la plus solide.",
+ "Fin de session. Même heure demain."
+];
+const INES_NOTES=[
+ /* "17 h" was her old volume; she does about 29 now. The rest of her is
+    unchanged — the reconversion, the CDI, the children. */
+ "29 h cette semaine. Comme prévu.",
+ "Réveil 5 h. La maison dort, moi je travaille.",
+ "J'ai quitté un CDI pour ce concours. Ce n'est pas pour finir 74e.",
+ "Premier passage sur tout le programme bouclé. Deuxième tour.",
+ "Rien d'héroïque. Juste le plan, exécuté.",
+ "Une annale chaque samedi. Le reste s'organise autour.",
+ "Les jeunes du concours ont le temps devant eux. Moi, j'ai une raison.",
+ "Session du soir après les devoirs des enfants. Celles-là comptent double."
+];
+const THOMAS_NOTES=[
+ "Bon. Semaine compliquée. Je m'y remets lundi, promis.",
+ "2 h aujourd'hui. Record du mois. Assez fier.",
+ "J'ai retrouvé mes fiches sous un carton de pizza. Ça repart.",
+ "Quelqu'un a le lien des annales ? J'ai encore perdu le mien.",
+ "Réviser un samedi ? Bon. Ok. Une heure.",
+ "Je me suis fait un planning. Enfin, une idée de planning.",
+ "Franchement, il reste le temps. Enfin je crois.",
+ "La grammaire c'est logique en fait ? On me l'avait jamais dit.",
+ "Ok, j'ai lu le programme en entier pour la première fois. Ah.",
+ "Grosse session cette nuit. Me demandez pas pourquoi à cette heure-là."
+];
+/* ╔═════════════════════════════════════════════════════════════════════════╗
+   ║  STATE — THE JOURNAL OF FACTS                                           ║
+   ╚═════════════════════════════════════════════════════════════════════════╝
+
+   Everything the app knows is DERIVED from a list of facts: "a session was
+   logged", "this chapter turned green", "the exam date changed". Nothing
+   else is stored.
+
+   Golden rule, in force throughout this file:
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │  `state` is NEVER modified by hand. It is always the result of        │
+   │  `project(journal)`. To change anything, you record a fact with       │
+   │  `Peloton.record(...)` — and that is all.                             │
+   └──────────────────────────────────────────────────────────────────────┘
+
+   Three consequences, and they are the whole point of the design:
+
+   1. Two devices that each worked on their own side only have to pool their
+      facts. Neither can erase the other's work.
+   2. The same journal always yields the same state, whatever order the files
+      arrived in. There is nothing left to "arbitrate".
+   3. Adding a feature = adding a fact type below and emitting it. The Swift
+      side never has to know it exists.
+
+   The Swift side (`Sync/` and `Bridge/` folders) only carries these facts:
+   it timestamps them, orders them, merges them, writes them to the iCloud
+   folder, reads them back. It has no idea what they mean. */
+
+/* ---- THE FACT CATALOGUE -----------------------------------------------------
+   A fact is immutable: to correct one you add a new fact, you never go back
+   and edit an old one.
+
+   pelotonStarted      {start, exam, seed}   the peloton is born — exactly once
+   pelotonReset        {}                    everything before it is cancelled
+   onboardingFinished  {}
+
+   sessionLogged       {id, date, min, mat, type, chap, manual, loggedOn, at}
+                       `at` = HH:MM at the moment of saving, local.
+                       `loggedOn` = the day the session was entered. Equal to
+                       `date` for anything declared the same day; later for a
+                       session dated after the fact. Absent on facts older than
+                       the rule — those are taken at their word.
+   sessionDeleted      {id}
+   annaleLogged        {id, date, e1, e2, o1, o2}
+                       `date` is DAY ONE of the paper — the writtens. The
+                       orals are sat the next day, so a second fact arrives
+                       with the same date to complete the first: fields are
+                       merged, a value never overwritten by a blank. Facts
+                       written before the orals existed carry no o1/o2 and
+                       stay exactly what they were.
+   annaleDeleted       {id}
+
+   chapterStatusSet    {id, status, date}    0 to review · 1 in progress · 2 consolidated
+   chapterTouched      {id, date}            chapter kept alive by a session
+
+   elasticityAdjusted  {from, days, mult}    Laura's hidden elasticity
+   milestoneReached    {id, label, date}
+   rendezVousPris      {date, h, min}          tomorrow's appointment with
+                       yourself. `min: 0` is a declared rest day — a decision,
+                       not an absence. The last one for a date wins: changing
+                       your mind during the day costs nothing, which is the
+                       point. A commitment device that makes committing
+                       expensive stops being used.
+   debriefSeen         {week}
+   settingChanged      {key, value}          see SYNCED_SETTINGS
+
+   NOT FACTS (device-specific, never synchronised):
+   the timer currently running and the date of the last opening — see
+   `Peloton.setLocal`. */
+
+/* The settings that travel. For those, and those alone, "the last gesture
+   wins" — which is exactly what one expects from a setting. */
+const SYNCED_SETTINGS = new Set(["exam", "theme", "dailyTarget", "refTotal"]);
+
+function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)}
+
+/* The state of a peloton that does not exist yet. Acts as a skeleton behind
+   the welcome screen: the whole UI can run without ever testing for `null`. */
+function emptyState(){
+  return {
+    started:false,                       // true as soon as a `pelotonStarted` exists
+    start:todayStr(), exam:"2027-04-06", seed:1,
+    sessions:[], chaps:{}, annales:[], adj:[], milestones:{}, rdv:{},
+    debriefSeen:null, onboarded:false,
+    theme:"light",
+    /* Minutes aimed at each day. A target, not the streak floor: the floor
+       (STREAK_MIN) says whether a day counts at all, this says what you were
+       going for. The widget ring measures against it. */
+    dailyTarget:60,
+    /* The whole preparation, in hours: what the model treats as a complete
+       one. It is NOT your target — it is the yardstick everyone, yourself and
+       the peloton alike, is measured against, and it is the denominator of the
+       volume score.
+       A TOTAL rather than a weekly rate, because that is how the sources state
+       it and because it makes the figure on screen exact: the cumulative
+       reference equals this number whatever the length of your preparation.
+       1 000 h sits just above the band the preparation providers converge on
+       (600–900 h) — a round number and a deliberate stretch, chosen rather
+       than derived. No public survey measures what candidates really do; there
+       is none to cite. A documented convention, not a measurement, and
+       settable for exactly that reason. */
+    refTotal:1000,
+    // spliced back in from local preferences — see withLocalPreferences()
+    lastOpen:todayStr(), timerStart:null, timerAcc:0
+  };
+}
+
+/* ---- THE PROJECTION ---------------------------------------------------------
+   PURE FUNCTION: same journal ⇒ same state, on every device, whatever the
+   order in which the files happened to arrive. That property is what makes
+   synchronisation unbreakable.
+
+   It is also the ONLY definition of what the data means anywhere in the
+   project. The day a state looks wrong, this is where to look — nowhere
+   else. */
+function project(events){
+  const st=emptyState();
+
+  /* A reset cancels everything that precedes it. The journal being in the same
+     order everywhere, every device stops at exactly the same place — so the
+     reset propagates all by itself. */
+  let from=0;
+  for(let i=0;i<events.length;i++)if(events[i].kind==="pelotonReset")from=i+1;
+
+  /* Tombstones: a deletion made on one device holds everywhere and forever.
+     (The previous version capped them at 800, past which a deleted session
+     could come back from the dead.) */
+  const deleted=new Set();
+
+  for(let i=from;i<events.length;i++){
+    const e=events[i],d=e.data||{};
+    switch(e.kind){
+
+      case "pelotonStarted":
+        /* The FIRST one wins. If two devices each created a peloton on their
+           own side, the total order names the same winner everywhere — without
+           the question the previous version put to the user. */
+        if(!st.started){st.started=true;st.start=d.start;st.exam=d.exam;st.seed=d.seed>>>0}
+        break;
+
+      case "onboardingFinished": st.onboarded=true; break;
+
+      case "sessionLogged":
+        st.sessions.push({id:d.id,date:d.date,min:d.min,mat:d.mat,
+                          type:d.type,chap:d.chap||null,manual:!!d.manual,
+                          loggedOn:d.loggedOn||null,at:d.at||null});
+        break;
+
+      case "annaleLogged":{
+        /* One row per paper, not per gesture. The writtens are entered on the
+           Saturday and the orals on the Sunday, and both belong to the same
+           paper — so a fact for a date already present completes it. Merging
+           per field, never letting a blank erase a mark: entering the orals
+           must not wipe the writtens. */
+        const num=v=>v==null?null:v;
+        const prev=st.annales.find(a=>a.date===d.date);
+        if(prev){
+          for(const k of ["e1","e2","o1","o2"])if(d[k]!=null)prev[k]=d[k];
+        }else st.annales.push({id:d.id,date:d.date,
+          e1:num(d.e1),e2:num(d.e2),o1:num(d.o1),o2:num(d.o2)});
+        break;
+      }
+
+      case "sessionDeleted":
+      case "annaleDeleted": deleted.add(d.id); break;
+
+      case "chapterStatusSet":{
+        /* Status: the last gesture wins (we are in the total order, overwriting
+           is enough). Touches: they add up, not one of them is ever lost. */
+        const c=chapterEntry(st,d.id,d.status);
+        c.s=d.status;
+        c.touches.push(d.date);
+        break;
+      }
+
+      case "chapterTouched":
+        // a chapter kept alive without an explicit status starts "in progress"
+        chapterEntry(st,d.id,1).touches.push(d.date);
+        break;
+
+      case "elasticityAdjusted":
+        if(!st.adj.some(a=>a.from===d.from))st.adj.push({from:d.from,days:d.days,mult:d.mult});
+        break;
+
+      case "milestoneReached":
+        // a milestone keeps its FIRST date: a threshold is crossed only once
+        if(!st.milestones[d.id])st.milestones[d.id]={label:d.label,date:d.date};
+        break;
+
+      case "rendezVousPris":
+        // last one wins: revising the hour, the length, or calling the day off
+        // is allowed all day and costs nothing
+        st.rdv[d.date]={h:d.h,min:d.min};
+        break;
+
+      case "debriefSeen":
+        if(!st.debriefSeen||d.week>st.debriefSeen)st.debriefSeen=d.week;
+        break;
+
+      case "settingChanged":
+        if(SYNCED_SETTINGS.has(d.key))st[d.key]=d.value;
+        break;
+    }
+  }
+
+  const byDate=(a,b)=>a.date<b.date?-1:(a.date>b.date?1:0);
+  st.sessions=st.sessions.filter(x=>!deleted.has(x.id)).sort(byDate);
+  st.annales =st.annales .filter(x=>!deleted.has(x.id)).sort(byDate);
+  st.adj.sort((a,b)=>a.from<b.from?-1:1);
+  for(const id in st.chaps){
+    const c=st.chaps[id];
+    let t=[...new Set(c.touches)].sort();
+    if(t.length>80)t=t.slice(-60);   // same cap as the previous version
+    c.touches=t;
+  }
+  return st;
+}
+
+function chapterEntry(st,id,statusIfNew){
+  if(!st.chaps[id])st.chaps[id]={s:statusIfNew|0,touches:[]};
+  return st.chaps[id];
+}
+
+/* ---- PICKING UP THE OLD `peloton-sync.json` FILE ----------------------------
+   Converted into facts, once only, on the first launch of this version.
+
+   The identifiers are DERIVED FROM THE CONTENT ("legacy:session:sm3f2") and
+   not drawn at random: if both devices import the same old file each on
+   their own side, they build identical facts, which deduplicate instead of
+   piling up. Ranks 0 and 1 place them ahead of everything else in the
+   journal. */
+const LEGACY={
+  toEvents(json){
+    let old;
+    try{old=JSON.parse(json)}catch(e){return []}
+    if(!old||!old.seed||!old.start)return [];
+
+    const out=[];
+    const fact=(key,kind,data,order)=>out.push({
+      kind,data,pinned:{id:"legacy:"+key,order:order===undefined?1:order,device:"legacy"}});
+
+    // rank 0: the birth of the peloton necessarily precedes everything else
+    fact("start","pelotonStarted",{start:old.start,exam:old.exam,seed:old.seed},0);
+    if(old.onboarded)fact("onboarded","onboardingFinished",{});
+
+    for(const s of old.sessions||[])
+      fact("session:"+s.id,"sessionLogged",
+        {id:s.id,date:s.date,min:s.min,mat:s.mat,type:s.type,
+         chap:s.chap||null,manual:!!s.manual});
+    for(const id of old.deletedIds||[])
+      fact("deleted:"+id,"sessionDeleted",{id});
+
+    for(const a of old.annales||[])
+      fact("annale:"+a.id,"annaleLogged",
+        {id:a.id,date:a.date,e1:a.e1,e2:a.e2==null?null:a.e2,o1:null,o2:null});
+
+    for(const id in (old.chaps||{})){
+      const c=old.chaps[id];
+      if(!c)continue;
+      const touches=c.touches||[];
+      fact("chap:"+id,"chapterStatusSet",
+        {id,status:c.s|0,date:touches.length?touches[touches.length-1]:old.start});
+      for(const t of touches)fact("chaptouch:"+id+":"+t,"chapterTouched",{id,date:t});
+    }
+
+    for(const a of old.adj||[])
+      fact("adj:"+a.from,"elasticityAdjusted",{from:a.from,days:a.days,mult:a.mult});
+    for(const id in (old.milestones||{}))
+      fact("milestone:"+id,"milestoneReached",
+        {id,label:old.milestones[id].label,date:old.milestones[id].date});
+    if(old.debriefSeen)fact("debrief","debriefSeen",{week:old.debriefSeen});
+
+    // `exam` is already carried by `pelotonStarted`: re-emitting it here would
+    // create an order dependency between two facts of the same rank.
+    for(const key of ["theme"])
+      if(old[key]!=null)fact("setting:"+key,"settingChanged",{key,value:old[key]});
+
+    return out;
+  }
+};
+
+/* ---- THE BRIDGE TO SWIFT ----------------------------------------------------
+   A single point of contact, a single contract: we call, and we get back
+   EVERYTHING Swift knows. Never a partial update, therefore never a
+   divergence between the two sides. */
+const Native=(function(){
+  let handler=null;
+  try{handler=W.webkit&&W.webkit.messageHandlers&&W.webkit.messageHandlers.peloton}catch(e){}
+
+  if(handler)return {
+    isNative:true,
+    async call(name,payload){
+      const raw=await handler.postMessage({call:name,payload:payload===undefined?null:payload});
+      return raw?JSON.parse(raw):null;
+    }
+  };
+
+  /* Browser fallback: the app stays usable in Safari to work on the interface,
+     but NOTHING is saved (everything vanishes on reload).
+
+     This fallback does NOT reimplement the projection — it merely keeps the
+     journal in memory under the same rules as Swift (deduplication by
+     identifier, sort by rank then device then identifier). So it cannot
+     diverge from the real engine. */
+  let events=[],counter=0,revision=0;
+  const local={};
+  const compare=(a,b)=>a.order-b.order
+    ||(a.device<b.device?-1:a.device>b.device?1:0)
+    ||(a.id<b.id?-1:a.id>b.id?1:0);
+  const envelope=()=>({
+    events:events.slice(),
+    status:{revision,hasFolder:false,eventCount:events.length,deviceName:"Navigateur",
+            contributors:[],awaitingPush:false,
+            problem:"Version navigateur : rien n'est sauvegardé. Utilise l'app native."},
+    legacy:null, local:Object.assign({},local)});
+
+  return {
+    isNative:false,
+    async call(name,payload){
+      if(name==="append"&&payload){
+        const nextOrder=events.length?events[events.length-1].order+1:1;
+        payload.forEach((draft,i)=>{
+          const pinned=draft.pinned;
+          events.push({
+            id:pinned?pinned.id:"navigateur-"+(++counter),
+            order:pinned?pinned.order:nextOrder+i,
+            device:pinned?pinned.device:"navigateur",
+            time:new Date().toISOString(),
+            kind:draft.kind,data:draft.data});
+        });
+        const seen=new Set();
+        events=events.filter(e=>seen.has(e.id)?false:seen.add(e.id)).sort(compare);
+        revision++;
+      }
+      if(name==="reset"){   // like Swift: a fact, not an erasure
+        events=[{id:"navigateur-"+(++counter),
+                 order:events.length?events[events.length-1].order+1:1,
+                 device:"navigateur",time:new Date().toISOString(),
+                 kind:"pelotonReset",data:{}}];
+        revision++;
+      }
+      if(name==="setLocalPreference"&&payload)local[payload.key]=payload.value;
+      return envelope();
+    }
+  };
+})();
+
+/* ---- THE STORE --------------------------------------------------------------
+   The only object allowed to reassign `state`. */
+let state=emptyState();
+
+const Peloton={
+  log:[],            // the journal, exactly as Swift knows it
+  status:{},         // synchronisation status, for display
+  local:{},          // settings specific to this device
+  revision:-1,       // see apply(): ignores answers that arrived late
+  failure:null,      // last action that could NOT be recorded
+
+  /* ═══ THE ONLY WAY TO CHANGE ANYTHING AT ALL ═══
+     `await Peloton.record(...)` returns once `state` reflects the fact. */
+  record(kind,data){return this.update(()=>[{kind,data}])},
+  recordMany(facts){return this.update(()=>facts)},
+
+  /* Recordings are SERIALISED, and `build` is called only at the last moment,
+     once `state` is up to date.
+
+     Without serialisation, two gestures in quick succession started from the
+     same stale read: a double tap on a chapter read "to review" twice and
+     advanced by one step instead of two.
+
+     A link in the chain NEVER lets an error escape: a queue poisoned by a
+     single incident would give an app that looks alive but records nothing at
+     all — the worst failure imaginable here. */
+  update(build){
+    this._chain=(this._chain||Promise.resolve()).then(async()=>{
+      try{
+        const facts=build();
+        if(!facts||!facts.length)return state;
+        this.failure=null;                 // cleared BEFORE the render that follows
+        await this.apply(await Native.call("append",facts));
+      }catch(e){
+        this.reportFailure("Ta dernière action n'a pas pu être enregistrée",e);
+      }
+      return state;
+    });
+    return this._chain;
+  },
+
+  /* The operations that query Swift. They never reject: a failure becomes a
+     message on the screen, not an exception travelling up to break the
+     caller. At startup, an exception here used to leave the app frozen and
+     mute. */
+  pull(){return this.ask("pull","Lecture du dossier impossible")},
+  reset(){return this.ask("reset","Remise à zéro impossible")},
+  loadFromNative(){return this.ask("snapshot","Lecture de la sauvegarde locale impossible")},
+
+  async ask(call,label){
+    try{
+      const envelope=await Native.call(call);
+      this.failure=null;
+      return await this.apply(envelope);
+    }catch(e){
+      this.reportFailure(label,e);
+      return state;
+    }
+  },
+
+  /* Every failure is SEEN: red banner and toast, never a log line nobody will
+     ever read. */
+  reportFailure(label,error){
+    this.failure=label+" ("+((error&&error.message)||error)+").";
+    try{renderSyncBanner();toast("⚠ "+label+".")}catch(e){}
+  },
+
+  /* Calls we expect no answer from. Failure is swallowed here rather than
+     leaving an ownerless rejected promise lying around. */
+  tell(call,payload){
+    Native.call(call,payload).catch(e=>console.warn("Peloton — call \""+call+"\" failed:",e));
+  },
+
+  chooseFolder(){this.tell("chooseFolder")},
+
+  /* Device-specific setting: never goes into the journal. */
+  setLocal(key,value){
+    this.local[key]=value;
+    state=withLocalPreferences(state);
+    this.tell("setLocalPreference",{key,value});
+  },
+
+  scheduleNotifications(plan){this.tell("scheduleNotifications",plan)},
+  publishWidget(plan){this.tell("publishWidget",plan)},
+
+  /* Swift pushes something new to us: the other device wrote to the folder. */
+  receiveFromNative(base64){
+    try{
+      const json=new TextDecoder().decode(Uint8Array.from(atob(base64),c=>c.charCodeAt(0)));
+      this.apply(JSON.parse(json))
+        .catch(e=>console.warn("Peloton — incoming update ignored:",e));
+    }catch(e){
+      console.warn("Peloton — message natif illisible :",e);
+    }
+  },
+
+  /* The single gateway: journal → state → screen. */
+  async apply(envelope){
+    if(!envelope)return state;
+
+    /* An answer that arrived late is ignored. Without this guard, a folder read
+       that left BEFORE an action could come back AFTER it and make that action
+       vanish from the screen until the next synchronisation. */
+    const revision=(envelope.status&&envelope.status.revision)||0;
+    if(revision<this.revision)return state;
+    this.revision=revision;
+
+    this.log=envelope.events||[];
+    this.status=envelope.status||{};
+    this.local=envelope.local||{};
+    state=withLocalPreferences(project(this.log));
+
+    /* Picking up the old save: only while the journal is still completely
+       empty, so at most once in the life of the app. After a reset, the
+       journal holds the "reset" fact: it is no longer empty, and the old file
+       therefore cannot come back from the dead. */
+    if(envelope.legacy&&this.log.length===0){
+      const facts=LEGACY.toEvents(envelope.legacy);
+      // DIRECT recording, outside the `update` queue: we may already be
+      // running one of its links, and hooking onto it would deadlock one
+      // against the other.
+      if(facts.length)return this.apply(await Native.call("append",facts));
+    }
+
+    onStateChanged();
+    return state;
+  }
+};
+W.Peloton=Peloton;   // Swift calls Peloton.receiveFromNative(...)
+
+/* Device-specific settings are spliced back into `state`, so that the rest of
+   the app keeps reading from a single object. */
+function withLocalPreferences(st){
+  const p=Peloton.local||{};
+  st.timerStart=p.timerStart==null?null:p.timerStart;
+  st.timerAcc=p.timerAcc||0;
+  st.lastOpen=p.lastOpen||st.start;
+  return st;
+}
+
+/* Called after every state change, wherever it comes from (an action here, or
+   the other device). While `boot()` has not finished it does nothing: it is
+   `boot()` that lays down the first render. */
+function onStateChanged(){
+  if(!W.__booted)return;
+  applyTheme();
+  renderAll();
+  renderSyncUI();
+  pushPlanToNative();
+  /* The welcome screen DEPENDS on the state: it must therefore be reassessed
+     here, and not only at startup. Three situations prove it:
+       · the folder has just been chosen and brings a peloton (or not);
+       · the other device has just created the peloton;
+       · the other device has just reset everything.
+     Without this line, the app stayed stuck on "Choose the folder…" even
+     though everything had gone fine behind the scenes. */
+  openSession().catch(e=>console.warn("Peloton — opening session:",e));
+}
+
+/* ---- THE SYNCHRONISATION DISPLAY -------------------------------------------- */
+
+function fmtDateTime(ms){
+  const d=new Date(ms);
+  return fmtDate(d2s(d))+" · "+d.getHours()+" h "+pad(d.getMinutes())+" min "+pad(d.getSeconds())+" s";
+}
+
+/* Gate screen: the only case where the app deliberately blocks is the very
+   first install (no data anywhere). Past that moment, a failure of the folder
+   never again stands between you and working: the data is already on the
+   device. */
+function showGate(msg,btnLabel,action){
+  $("onbText").innerHTML=msg;
+  const go=$("onbGo");
+  go.textContent=btnLabel;
+  go.onclick=action;
+  $("onb").classList.add("open");
+}
+function hideGate(){$("onb").classList.remove("open")}
+
+function renderSyncUI(){
+  renderSyncBanner();
+  renderSyncDetails();
+}
+
+/* Red banner: any anomaly stays visible for as long as it lasts. */
+function renderSyncBanner(){
+  const b=$("syncBanner");
+  if(!b)return;
+  const s=Peloton.status||{};
+  let msg=null,action=null;
+
+  if(Peloton.failure){
+    msg="⚠ "+Peloton.failure;
+  }else if(!Native.isNative){
+    msg="Version navigateur : rien n'est sauvegardé. Utilise l'app native.";
+  }else if(!s.hasFolder){
+    // Not dramatic at all any more: the data is safe on the device.
+    msg="Aucun dossier de synchronisation — tes données sont sauvegardées ici, "
+       +"mais elles ne rejoindront pas ton autre appareil. Touche pour en choisir un.";
+    action=()=>Peloton.chooseFolder();
+  }else if(s.problem){
+    msg="⚠ "+s.problem+(s.awaitingPush
+      ?" Tes dernières actions sont enregistrées sur cet appareil et repartiront toutes seules."
+      :"");
+  }
+
+  b.textContent=msg||"";
+  b.style.display=msg?"block":"none";
+  b.style.cursor=action?"pointer":"default";
+  b.onclick=action;
+}
+
+/* Detail in the "More" tab: who contributed, when, how much. */
+function renderSyncDetails(){
+  const s=Peloton.status||{};
+  const el=$("loadedState");
+  if(el){
+    const rows=(s.contributors||[]).map(c=>
+      "<b>"+c.name+"</b>"+(c.isThisDevice?" (cet appareil)":"")
+      +" — "+c.eventCount+" action"+(c.eventCount>1?"s":"")
+      +(fmtLegibleDate(c.lastActivity)?", dernière le "+fmtLegibleDate(c.lastActivity):""));
+    el.innerHTML=rows.length
+      ? "Journal partagé : "+s.eventCount+" faits.<br>"+rows.join("<br>")
+      : "Aucune action enregistrée pour l'instant.";
+  }
+
+  const panel=$("syncNative");
+  if(!panel)return;
+  panel.style.display=Native.isNative?"block":"none";
+  const st=$("syncNativeStatus");
+  if(!st)return;
+
+  const green=!s.problem&&s.hasFolder;
+  const dot='<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:'
+    +(green?"var(--ok)":"var(--warn)")+';margin-right:6px;vertical-align:1px"></span>';
+  let text;
+  if(!s.hasFolder){
+    text="Aucun dossier choisi. Tes données restent sur cet appareil.";
+  }else if(s.problem){
+    text=s.problem;
+  }else{
+    text="Dossier connecté."
+      +(s.lastPullAt?" Dernière lecture : "+fmtDateTime(s.lastPullAt)+".":"")
+      +(s.lastPushAt?" Dernière publication : "+fmtDateTime(s.lastPushAt)+".":"");
+  }
+  st.innerHTML=dot+text;
+}
+
+/* Fact dates are ISO ("2026-08-12T18:03:11Z"): we make them legible without
+   depending on the exact format.
+
+   Returns null when the date means nothing: facts picked up from the old save
+   predate the journal and carry a conventional date (1970) that must on no
+   account be shown as is. */
+function fmtLegibleDate(iso){
+  if(!iso)return null;
+  const d=new Date(iso);
+  if(isNaN(d.getTime())||d.getFullYear()<2000)return null;
+  return fmtDate(d2s(d));
+}
+
+/* ================= TARGET (shared reference curve) ================= */
+/* The SHAPE of a preparation — gentle start, a push at two thirds, the big
+   effort before the writtens, a taper in the last fortnight. Its own weighted
+   mean depends on how long the preparation actually is — the opening fortnight
+   weighs more in a short one — so it is measured rather than assumed, and the
+   profile is then rescaled without being redrawn. */
+function targetShape(s){
+  const d=daysBetween(state.start,s);
+  const total=Math.max(daysBetween(state.start,state.exam),1);
+  const frac=d/total;
+  if(d<14)return 6;
+  if(frac<0.35)return 8.5;
+  if(frac<0.52)return 9.5;
+  if(frac<0.68)return 13;
+  if(frac<0.82)return 10;
+  if(frac<0.96)return 15;
+  return 8;
+}
+/* The reference, at the height set in the settings.
+   It used to be the shape alone — a fixed ~10.5 h/week — and that is where the
+   ceiling came from: it is the denominator of the volume score, so anyone
+   working much above it scored the same as anyone working far above it. At a
+   six-hour daily target you cross it on the third day of the week and the
+   model stops being able to tell your effort apart from anybody else's.
+   Scaled so the cumulative reference lands exactly on the total set in the
+   settings, whatever the length of the preparation — which is what lets the
+   tile print "conseillé 900 h" and be right. */
+let _shapeCache=null;
+function shapeMean(){
+  if(_shapeCache!==null)return _shapeCache;
+  const n=Math.max(daysBetween(state.start,state.exam),1);
+  let cum=0,cur=state.start;
+  for(let i=0;i<n;i++){cum+=targetShape(cur);cur=addDays(cur,1)}
+  _shapeCache=cum/n;
+  return _shapeCache;
+}
+function targetWeekly(s){
+  const n=Math.max(daysBetween(state.start,state.exam),1);
+  return targetShape(s)/shapeMean()*refTotal()*7/n;
+}
+let _tgtCache=null;
+function targetCum(s){
+  if(!_tgtCache)_tgtCache={};
+  if(_tgtCache[s]!==undefined)return _tgtCache[s];
+  let cum=0,cur=state.start;
+  const lim=Math.min(daysBetween(state.start,s),daysBetween(state.start,state.exam));
+  for(let i=0;i<lim;i++){cum+=targetWeekly(cur)/7;cur=addDays(cur,1)}
+  _tgtCache[s]=cum;return cum;
+}
+
+/* THE PROBABILITY MODEL USED TO LIVE HERE, and it is worth saying why it
+   does not any more.
+
+   It mapped three variables — volume, coverage, regularity — through a
+   sigmoid onto a percentage anchored on the published admission rate. Every
+   constant in it was chosen rather than fitted, because there is nothing to
+   fit against: no public data ties a volume of work to being taken. So it
+   produced a number that looked like a probability, could not act like one,
+   and could not be explained into meaning one either. It also started every
+   candidate at the admission rate on day one, which meant a fortnight of doing
+   nothing moved it by a single point — least informative exactly while the
+   habit is being formed.
+
+   What replaced it is hours, against an advised total. Nothing is inferred:
+   you can check every figure on screen against your own stopwatch.
+
+   Lost with it, deliberately: coverage and regularity no longer weigh on any
+   number. Erosion still shows in the Programme tab, and repairing a chapter is
+   still reported after a session — but neither costs or earns anything now.
+   That was the price of a page that can be read. */
+function expectedUnits(s){
+  const d=daysBetween(state.start,s);
+  const total=Math.max(daysBetween(state.start,state.exam),1);
+  const t0=14, t1=Math.max(total-14,t0+1); // exam ≤28 d away: never a zero/negative divisor
+  if(d<=t0)return 0;
+  return ECRIT_UNITS*clamp((d-t0)/(t1-t0),0,1);
+}
+
+/* ---- erosion / coverage ---- */
+function chapLastTouch(id,atDate){const c=state.chaps[id];if(!c||!c.touches)return null;
+  let lt=null;for(const t of c.touches){if(t<=atDate&&(!lt||t>lt))lt=t}return lt}
+function chapCredit(id,atDate){
+  const c=state.chaps[id];if(!c||!c.s)return 0;
+  const lt=chapLastTouch(id,atDate);if(!lt)return 0;
+  const age=daysBetween(lt,atDate);
+  const base=c.s===2?1:0.6,grace=c.s===2?28:21,rate=c.s===2?0.012:0.02,fl=c.s===2?0.6:0.35;
+  if(age<=grace)return base;
+  return Math.max(fl,base-rate*(age-grace));
+}
+function chapEroded(id,atDate){
+  const c=state.chaps[id];if(!c||!c.s)return false;
+  const lt=chapLastTouch(id,atDate);if(!lt)return false;
+  return daysBetween(lt,atDate)>(c.s===2?28:21);
+}
+
+/* ---- what a session is worth ----
+   An hour, and nothing else. A declared session used to weigh 0.95 against a
+   timed one, and a backdated one 0.85. Both discounts are gone: they were the
+   last multiplier standing between the figure on screen and the stopwatch, and
+   a number you cannot reproduce from your own memory of the week is a number
+   you end up not trusting.
+   What the distinction still decides is whether a day COUNTS — see below. A
+   session dated after the fact cannot carry a day of the chain, because there
+   is nothing left to check it against. That is a rule about validity, not a
+   price, and backdating has since been removed from the app entirely, so it
+   only ever concerns facts written before that.
+   Sessions recorded before this rule existed carry no `loggedOn`: they are
+   taken at their word.
+
+   The 0.85 branch is now history only: backdating was removed from the app,
+   and a manual session can be dated today and no other day. The rule stays
+   because the journal does — facts already written keep the meaning they had
+   when they were written, and a projection that stopped honouring them would
+   quietly rewrite the past. */
+function sessOnTime(x){return !x.manual||!x.loggedOn||x.loggedOn===x.date}
+
+/* WHEN A SESSION OF YOURS HAPPENED.
+   Every session now carries `at`, the clock time it was saved. What that means
+   depends on how it was recorded, and the feed must not blur the two:
+     · timed — you save when you stop, so the save is the END. The start is the
+       save minus the duration, and that is a real time you can recognise;
+     · declared — you are writing down something already done, so the save time
+       is when you WROTE IT, not when you worked. Showing it as a start would
+       be a small fabrication, so it is labelled "noté à".
+   Sessions recorded before this existed have no `at` and simply show no time,
+   exactly as they do today. */
+function nowHM(){const d=new Date();return d.getHours()+":"+pad(d.getMinutes())}
+function hmMinus(hm,mins){
+  const p=hm.split(":");
+  let t=(+p[0])*60+(+p[1])-mins;
+  while(t<0)t+=1440;
+  return Math.floor(t/60)+":"+pad(t%60);
+}
+function sessTime(x){
+  if(!x.at)return null;
+  return x.manual?{hm:x.at,noted:true}:{hm:hmMinus(x.at,x.min),noted:false};
+}
+
+/* ---- USER metrics ---- */
+function userMetrics(s){
+  let wh=0;const days=new Set();
+  for(const x of state.sessions){
+    if(x.date>s)continue;
+    wh+=x.min/60;days.add(x.date);
+  }
+  let cov=0;const domCredits=[];
+  for(const c of CHAPS){
+    if(c.oral)continue;
+    const cr=chapCredit(c.id,s);
+    if(c.dom)domCredits.push(cr);else cov+=cr;
+  }
+  domCredits.sort((a,b)=>b-a);
+  cov+=domCredits.slice(0,3).reduce((a,b)=>a+b,0);
+  /* Past-paper marks used to bend the estimate here — the one measurement of
+     your actual level anywhere in the model, worth up to a third of it. With
+     the probability gone there is nothing left for them to bend. They are
+     still recorded, still shown, still what the shared paper is for; they
+     simply no longer move a number. */
+  return {wh, covCredit:cov, activeTotal:days.size, date:s};
+}
+
+/* ================= THE PELOTON =================
+   100% deterministic generation from the seed. A black box, on purpose. */
+function manonShape(s){
+  const d=daysBetween(state.start,s);
+  const total=Math.max(daysBetween(state.start,state.exam),1);
+  const frac=d/total;
+  if(d<27)return 6.5;
+  if(frac<0.35)return 8.5;
+  if(frac<0.44)return 9.5;
+  if(frac<0.51)return 4;
+  if(frac<0.57)return 13;
+  if(frac<0.60)return 5;
+  if(frac<0.70)return 13.5;
+  if(frac<0.82)return 10;
+  if(frac<0.96)return 15;
+  return 9;
+}
+/* The ceiling rival is billed as such. At 13–19 h a week she stopped being one the
+   day the daily target went past three hours: a full-time candidate in
+   reconversion who has left a job for this does not work half of what you do.
+   Raised so the label stays true — still beatable, never by accident. */
+function inesShape(s){
+  const d=daysBetween(state.start,s);
+  const total=Math.max(daysBetween(state.start,state.exam),1);
+  const frac=d/total;
+  if(d<10)return 23;
+  if(frac<0.5)return 29;
+  if(frac<0.60)return 23;
+  if(frac<0.82)return 30;
+  if(frac<0.96)return 34;
+  return 18;
+}
+function thomasShape(s){
+  const d=daysBetween(state.start,s);
+  const total=Math.max(daysBetween(state.start,state.exam),1);
+  const frac=d/total;
+  if(d<21)return 3;
+  if(frac<0.35)return 5;
+  if(frac<0.44)return 6;
+  if(frac<0.51)return 1.5;
+  if(frac<0.57)return 6;
+  if(frac<0.60)return 2;
+  if(frac<0.70)return 5;
+  if(frac<0.82)return 5.5;
+  if(frac<0.96)return 9.5;
+  return 7;
+}
+/* THE ONLY PLACE A RIVAL IS NAMED.
+   Their names used to be typed out again in twenty-three other spots — the
+   welcome screen, both chart legends, the settings paragraph, half a dozen
+   sentences — so renaming one meant hunting the file and hoping. Everything
+   on screen now reads `RIVALS[k].name`; nothing repeats it. `intro` is their
+   line on the welcome screen, `profil` the one under their name in the
+   standing.
+   What must NEVER change here is `tag`: it seeds their timetable, so editing
+   it would rewrite every day they have ever worked. */
+const RIVALS={
+ M:{name:"Laura",cls:"m",cvar:"--her",hex:"#ea580c",tag:"",shape:manonShape,
+    amp:0.38,lo:0.45,hi:1.7,wd:[1.2,0.7,0.9,1.1,0.9,0.6,1.3],skip:[30,0.4],hw:[16,6],
+    unitH:8.5,consolAt:170,annStart:80,profil:"L3 · Université La Réunion",
+    intro:"L3 à l'université de La Réunion. Ta rivale directe."},
+ I:{name:"Magalie",cls:"i",cvar:"--ines",hex:"#8b5cf6",tag:"I:",shape:inesShape,
+    amp:0.16,lo:0.7,hi:1.35,wd:[0.6,1.1,1.15,1.1,1.15,1.05,0.85],skip:[30,0.4],hw:[5,4],
+    unitH:8,consolAt:150,annStart:55,profil:"Reconversion · Temps plein",
+    intro:"En reconversion, à temps plein. Le plafond."},
+ T:{name:"Nicolas",cls:"t",cvar:"--thomas",hex:"#ca8a04",tag:"T:",shape:thomasShape,
+    amp:0.85,lo:0.08,hi:2.3,wd:[1.5,0.5,0.8,1.0,0.9,0.5,1.4],skip:[50,0.65],hw:[19,5],
+    unitH:12,consolAt:230,annStart:170,profil:"L3 · Université de Toulouse",
+    intro:"L3 à Toulouse, préparation… variable. Ne te laisse jamais doubler par lui."}
+};
+const RKEYS=["M","I","T"];
+let _evCache={},_rdCache={};
+function invalidateRivals(k){if(k){_rdCache[k]=null;_pqCache={}}else{_rdCache={};_evCache={};_pqCache={}}}
+function rivalEvents(k){
+  if(_evCache[k])return _evCache[k];
+  const R=RIVALS[k],total=daysBetween(state.start,state.exam),ev=[],r=rng(state.seed,R.tag+"events");
+  if(k==="M"){
+    const nF=r()<0.6?2:1;
+    for(let i=0;i<nF;i++)ev.push({from:addDays(state.start,Math.floor(total*(0.12+0.55*r()))),len:2+Math.floor(r()*3),mult:0,kind:"fievre"});
+    if(r()<0.7)ev.push({from:addDays(state.start,Math.floor(total*(0.63+0.12*r()))),len:2+Math.floor(r()*2),mult:0,kind:"cyclone"});
+    ev.push({from:addDays(state.start,Math.floor(total*(0.28+0.14*r()))),len:7,mult:0.45,kind:"mou"});
+  }else if(k==="I"){
+    for(let i=0;i<2;i++)ev.push({from:addDays(state.start,Math.floor(total*(0.15+0.6*r()))),len:1+Math.floor(r()*2),mult:0,kind:"enfant"});
+    if(r()<0.7)ev.push({from:addDays(state.start,Math.floor(total*(0.63+0.12*r()))),len:2,mult:0,kind:"cyclone"});
+  }else{
+    const nD=2+Math.floor(r()*2);
+    for(let i=0;i<nD;i++)ev.push({from:addDays(state.start,Math.floor(total*(0.08+0.7*r()))),len:5+Math.floor(r()*5),mult:0,kind:"disparu"});
+  }
+  _evCache[k]=ev;return ev;
+}
+/* ---- where each rival sits, relative to the reference ----
+   The peloton used to be three absolute rhythms — 6 to 15 h a week, 23 to 34,
+   1.5 to 9.5 — chosen to feel like three people and comparable to nothing.
+   They are now three landmarks on the one scale the whole app is built on:
+   half the reference, the reference itself, half again above it. Reading the
+   chart no longer requires knowing who anybody is.
+
+   Their character survives. Each shape is divided by its own mean, which turns
+   it into a pure modulation — Laura still has the slump week that drops her to
+   a third of her rhythm, Nicolas still has his — and the mean is then set by
+   the ratio below. Level and personality became separate things. */
+/* Laura sits at 1.05 rather than 1.00 on purpose. The ghost works at 1.02 of
+   the reference, so a rival at exactly 1.00 would trace the same line as the
+   grey one and the chart would carry two curves saying one thing. Five percent
+   above is close enough to read as "she IS the reference" and far enough to
+   keep the two apart. */
+const RIVAL_RATIO={M:1.05, I:1.5, T:0.5};
+const _shapeMeans={};
+function shapeMeanOf(k){
+  if(_shapeMeans[k]!==undefined)return _shapeMeans[k];
+  const f=RIVALS[k].shape,n=Math.max(daysBetween(state.start,state.exam),1);
+  let cum=0,cur=state.start;
+  for(let i=0;i<n;i++){cum+=f(cur);cur=addDays(cur,1)}
+  _shapeMeans[k]=cum/n;
+  return _shapeMeans[k];
+}
+/* The weekly setpoint. CAL corrects the one bias that survives normalising:
+   the weekly noise is exp() of a symmetric draw, whose mean is above 1, and
+   the skip rule then removes short days entirely. Neither is symmetric, and
+   they differ per rival because amp and skip do. Solved numerically over twelve
+   seeds, not guessed.
+   The weekly shared paper moved them a long way. Ten hours forty of compulsory
+   examination is a large, IDENTICAL cost imposed on three candidates of very
+   different volumes: it lifted the erratic one from 0.50 to 0.60 and pushed the
+   other two down, because on his own he does less in two days than the paper
+   takes, and they do more. A compulsory collective event compresses a peloton
+   toward its own size — which is true to life, and had to be undone here,
+   since the ratios are the design. Only the free days respond to this
+   constant; the examination does not, which is why it took a solver rather
+   than a division.
+   It corrects the AVERAGE. One seed still lands where its own draws put it,
+   and Nicolas swings ±5 % because a rival who skips two days in three is
+   supposed to. Yours is fixed, so yours is whatever it is — the ratios are
+   the design, not a guarantee about your particular peloton. */
+const RIVAL_CAL={M:1.179, I:1.155, T:0.652};
+const RIVAL_DAY_CAP=300, CAL_TOTAL=598;
+/* Every scale keyed on (start, exam) or on the reference height, dropped
+   together. They were three separate assignments at three call sites, which is
+   three chances to forget one — and forgetting one rescales the model without
+   saying so. */
+function resetScales(){
+  _tgtCache=null;_shapeCache=null;
+  for(const k in _shapeMeans)delete _shapeMeans[k];
+}
+function rivalWeekly(k,s){
+  const R=RIVALS[k];
+  return targetWeekly(s)*RIVAL_RATIO[k]*RIVAL_CAL[k]*R.shape(s)/shapeMeanOf(k);
+}
+function dayMult(k,s){
+  let m=1;
+  for(const e of rivalEvents(k)){const d=daysBetween(e.from,s);if(d>=0&&d<e.len)m*=e.mult}
+  if(k==="M")for(const a of state.adj){const d=daysBetween(a.from,s);if(d>=0&&d<a.days)m*=a.mult}
+  return m;
+}
+/* Calendar months, not thirty days: a 31st plus one month lands on the last
+   day of the next, never spills into the one after. */
+function addMonths(s,n){
+  const d=s2d(s),day=d.getDate();
+  d.setDate(1);d.setMonth(d.getMonth()+n);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return d2s(d);
+}
+/* EVERY shared paper: one a month, on the day of the month the peloton began,
+   until the exam. Cached on (start, exam) — the only two things it depends on —
+   so `isAnnaleDay` can ask on every day of every rival's calendar without
+   rebuilding the list seven hundred times. */
+let _shCache=null;
+function sharedAnnales(){
+  const key=state.start+"|"+state.exam;
+  if(_shCache&&_shCache.key===key)return _shCache.list;
+  const list=[];
+  // the second day must still fall before the exam: a paper is never half sat
+  for(let i=ANNALE1_DAY;;i+=ANNALE_EVERY){
+    const d=addDays(state.start,i);
+    if(addDays(d,1)>=state.exam)break;
+    list.push(d);
+  }
+  _shCache={key,list};
+  return list;
+}
+function isShared(s){return sharedAnnales().indexOf(s)>=0}
+/* Day two of a paper. Separate from isShared because the two days are not the
+   same exercise and do not carry the same hours. */
+function isSharedDay2(s){return sharedAnnales().indexOf(addDays(s,-1))>=0}
+function sharedMinutes(s){
+  if(isShared(s))return ANNALE_J1.reduce((a,x)=>a+x[3],0);
+  if(isSharedDay2(s))return ANNALE_J2.reduce((a,x)=>a+x[3],0);
+  return 0;
+}
+function nextShared(from){for(const d of sharedAnnales())if(d>=from)return d;return null}
+/* Where a shared paper's countdown starts from: the one before it, or the day
+   the peloton began. That is what makes the bar fill over exactly one month. */
+function prevShared(s){
+  let p=state.start;
+  for(const d of sharedAnnales()){if(d>=s)break;p=d}
+  return p;
+}
+function annale1(){const l=sharedAnnales();return l.length?l[0]:null}
+function isAnnaleDay(k,s){
+  if(isShared(s)||isSharedDay2(s))return true;   // nobody sits a shared paper out
+  const d=s2d(s);
+  if(d.getDay()!==6)return false;
+  if(s<addDays(state.start,RIVALS[k].annStart))return false;
+  return d.getDate()<=7;
+}
+function chapForUnit(u){
+  const order=["f1","f2","f3","f5","f6","m1","m2","m4","f7","m6","m8","f4","m3","m5","f8","m7","e1","f9","e2","m9","e3","f10","e5"];
+  const id=order[Math.min(u,order.length-1)];
+  const c=CHAPS.find(x=>x.id===id);
+  return c?c.n:"Révisions générales";
+}
+function rivalDays(k){
+  if(_rdCache[k])return _rdCache[k];
+  const R=RIVALS[k],days=[];
+  let cumWh=0,cumMin=0,activeTotal=0;
+  const end=addDays(state.exam,-1);
+  let cur=state.start;
+  const nD=daysBetween(state.start,end);
+  for(let i=0;i<=nD;i++){
+    const r=rng(state.seed,R.tag+"d"+cur);
+    const rw=rng(state.seed,R.tag+"w"+isoWeek(cur));
+    const wMult=clamp(Math.exp((rw()*2-1)*R.amp),R.lo,R.hi);
+    const weekly=rivalWeekly(k,cur)*wMult*dayMult(k,cur);
+    const dailyT=weekly*60*R.wd[dow(cur)]/7;
+    let min=0;
+    if(dailyT>8){
+      min=Math.round(dailyT*(0.6+0.8*r())/5)*5;
+      if(min<R.skip[0]&&r()<R.skip[1])min=0;
+      /* The daily cap has to move with the reference. Fixed at five hours it
+         silently broke the ratios the moment the bar was raised: at a 1 200 h
+         reference it clipped the ceiling rival on nearly every day and pulled
+         her from 1.50 down to 1.04. Scaled, the ratios hold from 10 to 40 h a
+         week. CAL_TOTAL is the reference RIVAL_CAL was measured against. */
+      min=Math.min(min,RIVAL_DAY_CAP*refTotal()/CAL_TOTAL);
+    }
+    let sess=null;
+    /* The shared paper overrides everything — a rest day, a lazy draw, even a
+       cyclone. On that one date the whole peloton is in the room. */
+    const shared=isShared(cur)||isSharedDay2(cur);
+    if(min>0||shared){
+      const unitIdx=Math.min(ECRIT_UNITS-1,Math.floor(cumWh/R.unitH));
+      const chap=chapForUnit(unitIdx);
+      const tr=r();const phase=cumWh>R.consolAt;
+      let type;
+      if(phase)type=tr<0.42?"exercices":(tr<0.62?"annale":(tr<0.82?"fiches":"relecture"));
+      else type=tr<0.45?"exercices":(tr<0.72?"cours":(tr<0.88?"fiches":"relecture"));
+      /* The shared paper is not "at least four hours" any more, it is the real
+         thing: eight hours of writing on day one, two hours forty of orals on
+         day two, the same for everybody. It overrides whatever the day had
+         drawn — nobody sits half a paper — and it escapes the daily cap, which
+         exists to keep ordinary days plausible and has no business trimming an
+         examination. */
+      if(shared){type="annale";min=sharedMinutes(cur)}
+      else if(isAnnaleDay(k,cur)){type="annale";min=Math.max(min,240+Math.round(r()*30/5)*5)}
+      cumWh+=min/60;cumMin+=min;activeTotal++;
+      // session time (drawn AFTER min/type: past history is left untouched)
+      // — except the shared paper, which starts at the same hour for everyone,
+      // the way a real concours blanc does. the ceiling rival no longer sits it at 5 am and
+      // the erratic one no longer finishes it at 2 in the morning.
+      const sh=shared?ANNALE1_H:R.hw[0]+Math.floor(r()*R.hw[1]);
+      const sm=shared?0:Math.floor(r()*12)*5;
+      sess={min,type,chap,h:sh,m:sm};
+    }
+    days.push({date:cur,min,sess,cumWh,cumMin,activeTotal});
+    cur=addDays(cur,1);
+  }
+  _rdCache[k]=days;return days;
+}
+/* rivalMetrics lived here. It assembled, for each rival, the same nine
+   figures userMetrics assembles for you — volume, coverage, the twenty-eight
+   day window, the longest gap, the past-paper factor — because the probability
+   needed all nine to compare two candidates. The comparison is hours now, and
+   hours are already in `cumWh`. */
+
+/* ================= HIDDEN ELASTICITY (the direct rival) =================
+   A thermostat, and it only ever works in ONE direction: it eases the direct rival off
+   when the gap has become discouraging. It never puts her back on the gas
+   when you close it.
+
+   The previous rule did both, and the acceleration branch was the one that
+   actually fired. Two defects, and they compounded:
+
+   1. It read the gap in `P`, which `damp` squeezes at the start. Simulated
+      over this preparation, the 0.22 threshold ("she eases off") could not
+      be reached before about day 30, and then only by stopping altogether —
+      while the 0.02 threshold ("she accelerates") is met constantly in the
+      early weeks, when everyone is still pinned to the base rate.
+   2. So the net effect was to punish catching up and never to relieve falling
+      behind — the exact inverse of what a rival is for.
+
+   The window granted is exactly the re-evaluation interval, so two grants can
+   never overlap and multiply into each other. */
+/* Read in hours now, like everything else. It used to compare the two of you
+   in S-space — the raw score behind the probability — which was the right
+   call while that space existed and is impossible now. A threshold nobody can
+   see, computed from a quantity nobody can see, would be the last piece of the
+   old model hiding in the machine.
+   0.55 of her cumulative hours: at half her pace the gap has stopped being a
+   spur. Being behind is the normal state of this race and must stay
+   uncomfortable — the thermostat is for the day it becomes a verdict. */
+const ELAST_RATIO=0.55, ELAST_FROM=10, ELAST_EVERY=7;
+async function maybeAdjust(){
+  const t=todayStr();
+  if(daysBetween(state.start,t)<ELAST_FROM)return;
+  const last=state.adj.length?state.adj[state.adj.length-1]:null;
+  if(last&&daysBetween(last.from,t)<ELAST_EVERY)return;
+  if(userHours(t)>=rivalHours("M",t)*ELAST_RATIO)return;
+  await Peloton.record("elasticityAdjusted",
+                       {from:addDays(t,1),days:ELAST_EVERY,mult:0.55});
+  invalidateRivals("M");
+}
+
+/* ================= YOUR CURRENT PACE ================= */
+/* Weighted hours over the last twenty days, per week.
+   Divided by the days actually elapsed, with no floor. There used to be a
+   seven-day one, so that a single good Sunday could not pass for a rhythm. It
+   did not bound the error — it FROZE the reading: two and a half hours on day
+   one came out as 2.6 h/week instead of eighteen, and then sat unchanged for a
+   week whatever happened. In an app whose entire subject is what you do today,
+   a display that cannot move for seven days is the worst defect available.
+   Without it the divisor grows by one every day, so a day not worked halves
+   the projection the next morning. The first days do swing — five hours on day
+   one really does read as five hours a day — and that is the honest meaning of
+   "at this rate" when the rate is one day old. It corrects itself by the very
+   thing that made it wrong: not working. */
+function currentRateW(){
+  const t=todayStr(),from=addDays(t,-20);
+  let wh=0;
+  for(const x of state.sessions){
+    if(x.date>=from&&x.date<=t)wh+=x.min/60;
+  }
+  const span=Math.max(1,Math.min(21,daysBetween(state.start,t)+1));
+  return wh/span*7;
+}
+
+/* ================= NOTES & JIBES ================= */
+function rivalNoteFor(k,s,sess){
+  for(const e of rivalEvents(k)){
+    const endEv=addDays(e.from,e.len);
+    if(s===endEv){
+      if(e.kind==="fievre")return "Trois jours de fièvre. Réglé. Reprise ce matin.";
+      if(e.kind==="cyclone")return k==="I"?"Coupure levée. J'ai travaillé sur papier, à la bougie.":"Alerte levée, électricité revenue. J'ai rattrapé hier soir.";
+      if(e.kind==="enfant")return "Enfant malade. Deux jours perdus, rattrapés ce soir.";
+      if(e.kind==="disparu")return "Bon. Reprise. On ne parle pas de la semaine dernière.";
+    }
+  }
+  const total=daysBetween(state.start,state.exam);
+  const d=daysBetween(state.start,s);
+  if(k==="M"&&d===total-6)return "Dernière ligne droite. Je lève un peu le pied : tout est en place.";
+  if(k==="M"&&sess&&sess.type==="annale"&&d>150){
+    const r=rng(state.seed,"annsc"+s);
+    return (11+r()*3).toFixed(1).replace(".",",")+" en É1 sur l'annale de ce matin. La barre monte.";
+  }
+  if(k==="I"&&sess&&sess.type==="annale"&&d>120){
+    const r=rng(state.seed,"I:annsc"+s);
+    return (13+r()*2.5).toFixed(1).replace(".",",")+" à l'annale du jour. On continue.";
+  }
+  const seq=piqueSeq(k,s);
+  if(seq<0)return null;
+  // every other jibe is GENERATED from that day's real data (current
+  // chapter, hours for the week, D-x): feed↔jibe stay consistent, and the
+  // same sentence never appears twice.
+  if(seq%2===1)return dynPique(k,s);
+  const pool=k==="M"?PIQUES:(k==="I"?INES_NOTES:THOMAS_NOTES);
+  return pool[permIdx(k,Math.floor(seq/2),pool.length)];
+}
+/* a jibe day? (deterministic, independent of the sessions) */
+function isPiqueDay(k,s){
+  if(daysBetween(s,state.exam)<=21)return false; // home straight: silence
+  const rw=rng(state.seed,RIVALS[k].tag+"pq"+isoWeek(s));
+  const freq=k==="M"?(rw()<0.5?1:(rw()<0.8?2:3)):(k==="I"?(rw()<0.3?1:0):(rw()<0.55?1:0));
+  if(freq===0)return false;
+  const picked=[];
+  for(let i=0;i<freq;i++)picked.push(Math.floor(rw()*7));
+  return picked.includes(daysBetween(mondayOf(s),s));
+}
+/* sequence no. of the day's jibe (cached per rival) */
+let _pqCache={};
+function piqueSeq(k,s){
+  if(!_pqCache[k]){
+    const m={};let i=0;
+    const end=todayStr()<state.exam?todayStr():state.exam;
+    let d=state.start;
+    const lim=Math.max(daysBetween(state.start,end),0);
+    for(let j=0;j<=lim;j++){
+      if(isPiqueDay(k,d)){m[d]=i++}
+      d=addDays(d,1);
+    }
+    _pqCache[k]=m;
+  }
+  return _pqCache[k][s]!==undefined?_pqCache[k][s]:-1;
+}
+/* i-th element of a seeded permutation (reshuffled at each full cycle) */
+function permIdx(k,i,len){
+  const block=Math.floor(i/len),pos=i%len;
+  const r=rng(state.seed,RIVALS[k].tag+"perm"+block);
+  const arr=[...Array(len).keys()];
+  for(let j=len-1;j>0;j--){const q=Math.floor(r()*(j+1));const t=arr[j];arr[j]=arr[q];arr[q]=t}
+  return arr[pos];
+}
+/* generated jibe: the variables come from the rival's real data that day */
+function dynPique(k,s){
+  const days=rivalDays(k);
+  const idx=clamp(daysBetween(state.start,s),0,days.length-1);
+  const chap=chapForUnit(Math.min(ECRIT_UNITS-1,Math.floor(days[idx].cumWh/RIVALS[k].unitH)));
+  const wh=fmtH(weekMinsAt(days,s));
+  const dj=daysBetween(s,state.exam);
+  const r=rng(state.seed,RIVALS[k].tag+"dyn"+s);
+  const T={
+   M:["« "+chap+" » : plié. Au suivant.",
+      wh+" cette semaine. Le plan tient, lui.",
+      "J-"+dj+". La moitié des inscrits n'a pas encore ouvert un livre.",
+      "Deuxième passage sur « "+chap+" ». Plus rien ne bouge.",
+      "J-"+dj+" et "+wh+" au compteur. Les maths sont de mon côté.",
+      "« "+chap+" » ce soir. Pas le chapitre le plus glorieux, mais il est fait."],
+   I:["Bloc du matin : « "+chap+" ». La maison dormait encore.",
+      wh+" cette semaine. Conforme au plan.",
+      "J-"+dj+". Le planning couvre tout, il suffit de le suivre.",
+      "« "+chap+" » repassé avant le petit-déjeuner. Journée libre pour le reste."],
+   T:["Bon, 40 min à chercher mes écouteurs, puis « "+chap+" ». Bilan mitigé.",
+      "J-"+dj+" ? On est large. Non ? Dites-moi qu'on est large.",
+      wh+" cette semaine. C'est peu. Mais c'est pas rien.",
+      "J'ai ouvert « "+chap+" », j'ai refermé, j'ai rouvert. Ça compte double ?"]
+  }[k];
+  return T[Math.floor(r()*T.length)];
+}
+/* ================= RENDERING ================= */
+const $=id=>document.getElementById(id);
+const TYPE_LABEL={exercices:"exercices",cours:"cours",annale:"annale chronométrée",fiches:"fiches",relecture:"relecture",oral:"oral"};
+const MAT_LABEL={fr:"Français",ma:"Maths",e2:"Épreuve 2",oral:"Oral"};
+let feedShown=25;
+
+/* ---- theme ---- */
+function personHex(k){
+  const dk=state&&state.theme==="dark";
+  return {Y:dk?"#4da3ff":"#2563eb",M:dk?"#fc5200":"#ea580c",
+          I:dk?"#c084fc":"#7c3aed",T:dk?"#eab308":"#ca8a04"}[k];
+}
+function chartTheme(){
+  if(state&&state.theme==="dark")
+    return {grid:"#2a2e40",axis:"#565b70",today:"#3a3f55",end:"#565b70",ghost:"#8b90a5",white:"#171922",areaOp:"0.28"};
+  return {grid:"#eaecf0",axis:"#98a2b3",today:"#d0d5dd",end:"#d0d5dd",ghost:"#94a3b8",white:"#ffffff",areaOp:"0.20"};
+}
+const SUN='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M19.2 4.8l-2.1 2.1M6.9 17.1l-2.1 2.1"/></svg>';
+const MOON='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>';
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme",state.theme==="dark"?"dark":"light");
+  const b=$("themeBtn");if(b)b.innerHTML=state.theme==="dark"?SUN:MOON;
+}
+function setTheme(th){Peloton.record("settingChanged",{key:"theme",value:th})}
+
+/* ---- delta chips ---- */
+function chipD(delta,unit,good){
+  const arr=delta>0?"▲":(delta<0?"▼":"–");
+  const cls=delta===0?"nt":(good?"up":"dn");
+  const v=String(Math.abs(delta)).replace(".",",");
+  return '<span class="chipd '+cls+'">'+arr+' '+v+unit+'</span>';
+}
+
+function renderGreeting(){
+  const h=(new Date()).getHours();
+  $("greeting").textContent=(h<12?"Bonjour":(h<18?"Bon après-midi":"Bonsoir"))+", Yannick";
+}
+
+/* ---- streak, weekly prescription, rank ---- */
+/* A DECLARED REST DAY, ONE PER WEEK.
+   Unlimited, it would be absurd: declare rest every day and the record is
+   perfect for no work at all. Capped at one, it becomes the thing the chain
+   was missing — nobody works 7/7 for thirty-four weeks, and a streak that
+   cannot survive a single planned day off is a streak that will be broken by
+   accident and then abandoned.
+   So the first declared rest of a week HOLDS the chain. The second is an
+   ordinary missed day, and is counted as a broken appointment. */
+function restLegit(date){
+  const r=state.rdv&&state.rdv[date];
+  if(!r||r.min!==0)return false;
+  let d=mondayOf(date);
+  while(d<date){
+    const x=state.rdv[d];
+    if(x&&x.min===0)return false;      // this week's one is already spent
+    d=addDays(d,1);
+  }
+  return true;
+}
+/* What makes a day count towards the chain: real minutes, or the week's one
+   planned rest. */
+function dayHolds(date){return dayCredit(date)>=STREAK_MIN||restLegit(date)}
+function dayCredit(dateStr){
+  let m=0;
+  for(const x of state.sessions){if(x.date===dateStr&&sessOnTime(x))m+=x.min}
+  return m;
+}
+function streakDays(){ // consecutive days carrying at least STREAK_MIN minutes
+  const t=todayStr();
+  const todayDone=dayHolds(t);
+  let d=todayDone?t:addDays(t,-1),n=0;
+  while(d>=state.start&&dayHolds(d)){n++;d=addDays(d,-1)}
+  return {n,todayDone};
+}
+/* The longest run since the start. A record, so it never goes down: breaking a
+   streak costs you the running count, never the proof that you held one. */
+function bestStreak(){
+  const byDay=new Map();
+  for(const x of state.sessions){
+    if(!sessOnTime(x))continue;
+    byDay.set(x.date,(byDay.get(x.date)||0)+x.min);
+  }
+  const t=todayStr();
+  let best=0,run=0,d=state.start;
+  while(d<=t){
+    if((byDay.get(d)||0)>=STREAK_MIN||restLegit(d)){run++;if(run>best)best=run}else run=0;
+    d=addDays(d,1);
+  }
+  return best;
+}
+/* Days worked this month — the headline figure, and the only one that cannot
+   collapse. A ratio does not break when you miss a day: it gets diluted, which
+   is the honest signal. Counted from the start of the peloton when it began
+   mid-month, so the denominator is never a stretch of time you never had. */
+function monthWorked(){
+  const t=todayStr();
+  let from=t.slice(0,8)+"01";
+  if(from<state.start)from=state.start;
+  const days=new Set();
+  for(const x of state.sessions){if(x.date>=from&&x.date<=t)days.add(x.date)}
+  return {n:days.size,elapsed:daysBetween(from,t)+1};
+}
+/* YOUR weekly goal: the daily target, seven times. Deliberately not
+   `targetWeekly` — that curve is the last admitted candidate's, it belongs to
+   the model, and it is not something you chose. This is the number you set in
+   Réglages, and it is the only one you are held to on screen. */
+/* Six, not seven. Multiplying by seven prices in a preparation with no day
+   off at all — at a six-hour target that is forty-two hours a week for
+   thirty-four weeks, and the week you take a Sunday you are shown a debt for
+   having rested. One day is planned out of the total; the chain does not
+   care which one. */
+const WEEK_DAYS=6;
+function weeklyTarget(){return dailyTarget()*WEEK_DAYS}
+function weekPrescription(){
+  const t=todayStr();
+  const tgtMin=weeklyTarget();
+  const done=weekMinsUser(t);
+  return {tgtMin,done,remain:Math.max(0,tgtMin-done)};
+}
+/* HOURS TO DATE — the one quantity the peloton is ranked on.
+   It used to be the probability, and the two disagreed: with 100 h against
+   Laura's 95 you ranked BELOW her, because her coverage and regularity scored
+   better in a model nobody could see. A standing that contradicts the only
+   figure on the page is worse than no standing. */
+function userHours(d){return userMetrics(d).wh}
+function rivalHours(k,d){
+  const days=rivalDays(k),idx=clamp(daysBetween(state.start,d),0,days.length-1);
+  const D=days[idx],t0=todayStr();
+  // same guard as everywhere else: today's session counts when its hour comes
+  const pending=D.date===t0&&!!D.sess&&!sessDue(D,t0);
+  return D.cumWh-(pending?D.min/60:0);
+}
+function userRank(d){
+  const h=userHours(d);let r=1;
+  for(const k of RKEYS)if(rivalHours(k,d)>h)r++;
+  return r;
+}
+function ordFr(r){return r===1?"1ᵉʳ":r+"ᵉ"}
+
+/* ---- summary card ---- */
+const IC_OK='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const IC_FLAT='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 16l5-5 4 4 6-7 3 3"/></svg>';
+const IC_WARN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9.2"/></svg>';
+function renderSummary(){
+  const t=todayStr();
+  const early=daysBetween(state.start,t)<7;
+  const uw=weekMinsUser(t),mw=weekMinsRival("M",t);
+  const uwPrev7=state.sessions.filter(x=>x.date>addDays(t,-14)&&x.date<=addDays(t,-7))
+                              .reduce((a,x)=>a+x.min,0);
+  const dpp=early?0:uw-uwPrev7;
+  const rank=userRank(t);
+  let nE=0;for(const c of CHAPS){if(!c.oral&&chapEroded(c.id,t))nE++}
+  /* home-straight mode: at D-21 the comparison fades away */
+  const daysLeft=daysBetween(t,state.exam);
+  if(daysLeft<=21&&daysLeft>=0){
+    const sc=$("summaryCard");
+    sc.className="card summary s-good";
+    $("sumIc").innerHTML=IC_OK;
+    $("sumTitle").textContent="Dernière ligne droite — J-"+daysLeft;
+    $("sumTxt").innerHTML="À ce stade, le classement est du bruit : personne d'autre ne composera à ta place. "
+      +"Cette semaine : <b>"+fmtH(uw)+"</b>. Le programme est ce qu'il est — consolide tes points forts, refais tes annales en conditions réelles, relis tes erreurs, et <b>dors</b>. "
+      +(nE>0?"<b>"+nE+" chapitre"+(nE>1?"s":"")+"</b> à retoucher en priorité.":"Aucun chapitre en érosion : tout est entretenu.");
+    return;
+  }
+  let status,cls,icon;
+  if(uw===0&&!early){status="Semaine blanche pour l'instant";cls="s-bad";icon=IC_WARN}
+  else if(dpp>=2){status="Belle dynamique";cls="s-good";icon=IC_OK}
+  else if(dpp<0){status="Ça glisse doucement";cls="s-warn";icon=IC_FLAT}
+  else{status="Course en cours";cls="s-mid";icon=IC_FLAT}
+  const sc=$("summaryCard");
+  sc.className="card summary "+cls;
+  $("sumIc").innerHTML=icon;
+  $("sumTitle").textContent=status;
+  let txt="Cette semaine, <b>"+fmtH(uw)+"</b> de travail contre <b>"+fmtH(mw)+"</b> pour "+RIVALS.M.name+". ";
+  if(early)txt+="Premiers jours de course : chaque session compte double dans ta régularité. ";
+  else txt+=(dpp>0?"<b>"+fmtH(dpp)+" de plus</b> que la semaine dernière":(dpp<0?"<b>"+fmtH(-dpp)+" de moins</b> que la semaine dernière":"exactement autant que la semaine dernière"))+" — tu es <b>"+rank+(rank===1?"ᵉʳ":"ᵉ")+"</b> au classement. ";
+  txt+=nE>0?"<b>"+nE+" chapitre"+(nE>1?"s":"")+"</b> s'effrite"+(nE>1?"nt":"")+" — va les retoucher.":"Aucun chapitre en érosion.";
+  const wp=weekPrescription();
+  txt+=wp.remain>0?" Ton objectif : encore <b>"+fmtH(wp.remain)+"</b> d'ici dimanche."
+    :" Ton objectif de la semaine : <b>tenu</b>.";
+  $("sumTxt").innerHTML=txt;
+}
+
+/* ---- WHERE YOU STAND ----
+   The headline number used to be the probability, and it could not be read.
+   It starts at the published admission rate, so a fortnight of doing nothing
+   moves it 1.1 points; it is squeezed by `damp` early, so it says more about
+   the calendar than about you; and nothing calibrates it against real
+   admissions, so no explanation makes it mean what it looks like it means.
+   These two readings are in hours — the unit you actually control, against a
+   reference you set yourself. Both start at zero: doing nothing reads as
+   nothing, which is the whole point. */
+const GAP_IN_DAYS_ABOVE=24;   // hours of debt past which hours stop conveying size
+
+function standingProj(){
+  const t=todayStr(),um=userMetrics(t);
+  const left=Math.max(daysBetween(t,state.exam),0);
+  const refTot=targetCum(state.exam);
+  const proj=um.wh+currentRateW()*left/7;
+  const short=Math.max(0,refTot-proj);
+  return {proj,refTot,left,short,perWeek:left>0?short/(left/7):0};
+}
+/* Each rival is projected with YOUR estimator, not with the future they
+   already have. They are generated to the exam date, so their April total is
+   known exactly — and printing that beside a projection of yours would make
+   you the only uncertain person on the page. Same twenty-day window, same
+   extrapolation, same meaning. The cost is that they swing as much as you do:
+   the erratic one reads far below what he will actually do whenever he is in
+   one of his troughs. That is his character being extrapolated, and it is the
+   same arithmetic that flatters you on a good week. */
+function rivalProj(k){
+  const t=todayStr(),days=rivalDays(k);
+  const idx=clamp(daysBetween(state.start,t),0,days.length-1);
+  const span=Math.max(1,Math.min(21,idx+1));
+  const rate=(days[idx].cumWh-days[Math.max(0,idx-20)].cumWh)/span*7;
+  return days[idx].cumWh+rate*Math.max(daysBetween(t,state.exam),0)/7;
+}
+
+function renderTiles(){
+  const t=todayStr();
+  const uw=weekMinsUser(t);
+  const tgtMin=weeklyTarget();
+  /* The bar carries the verdict; there is no badge beside it any more.
+     Two figures either side of a bar already say what the gap is — a chip
+     repeating it read "▼ 1000 h" next to "conseillé 1000 h", the same number
+     twice, once as a loss. Colour says the one thing neither figure does. */
+  function tile(lbl,val,barPct,barGrad,src){
+    return '<div class="tile"><div class="tl">'+lbl+'</div><div class="tv">'+val+'</div>'
+      +(barPct!=null?'<div class="bar"><i style="width:'+clamp(barPct,0,100)+'%;background:'+barGrad+'"></i></div>':'<div style="height:15px"></div>')
+      +'<div class="tf"><span>'+src+'</span></div></div>';
+  }
+  const wp=weekPrescription();
+  /* Hours, rounded: minutes matter on a session and are noise on a season.
+     "901 h 26" of advice reads as false precision, and false precision is what
+     the probability was taken off the front of this page for. */
+  const hrs=h=>{h=Math.abs(h);
+    if(h<1/60)return "0 h";
+    return h>=10?Math.round(h)+" h":fmtH(h*60)};
+  const p=standingProj(),adv=hrs(p.refTot);
+  /* Two different questions, so two different palettes.
+     The total is a verdict on where this rhythm ends: red, then amber at three
+     quarters of the advice, green once it is reached. A share rather than a
+     fixed 750 h, so the middle step follows the setting instead of going
+     meaningless the day it changes.
+     The week is a progress bar, not a verdict: blue while it fills, green when
+     the target is met. Red would be wrong here — being short of a weekly
+     target on Tuesday is not a failure, it is Tuesday. */
+  const share=p.proj/Math.max(p.refTot,1);
+  const barCol=share>=1?"var(--ok)":(share>=0.75?"var(--warn)":"var(--bad)");
+  $("tiles").innerHTML=
+    tile("Au rythme actuel, tu travailleras au total…",hrs(p.proj),
+      share*100,barCol,"conseillé "+adv)
+    +pelotonProjTile(p.refTot,adv)
+    +tile("Heures travaillées cette semaine",fmtH(uw),uw/tgtMin*100,
+      wp.remain>0?"var(--grad-you)":"var(--ok)",
+      wp.remain>0?"reste "+fmtH(wp.remain)+" pour atteindre l\'objectif personnel de "+fmtH(tgtMin)
+                 :"objectif personnel de "+fmtH(tgtMin)+" tenu")
+    // Coverage and 7-day regularity used to sit here. Regularity is what the
+    // chain says, better and over the whole preparation; coverage is the
+    // Programme tab's whole subject, chapter by chapter.
+    // And the direct rival alone has become all three: she was never the only one working.
+    // The rivals are measured against the reference curve, not against your
+    // target: they never aimed at it, and at forty hours a week they would
+    // read forty percent for ever, which says nothing about them.
+    +pelotonTile(t,targetWeekly(t)*60);
+}
+function pelotonProjTile(refTot,adv){
+  const hrs=h=>h>=10?Math.round(h)+" h":(h<1/60?"0 h":fmtH(h*60));
+  let rows="";
+  for(const k of RKEYS){
+    const v=rivalProj(k);
+    rows+='<div class="pk-row"><span class="dot" style="background:var('+RIVALS[k].cvar+')"></span>'
+      +'<span class="nm">'+RIVALS[k].name+'</span>'
+      +'<span class="bar"><i style="width:'+clamp(v/Math.max(refTot,1)*100,0,100)+'%;background:var('+RIVALS[k].cvar+')"></i></span>'
+      +'<span class="vv">'+hrs(v)+"</span></div>";
+  }
+  return '<div class="tile"><div class="tl">VS peloton</div>'+rows
+    +'<div class="tf" style="margin-top:9px"><span>conseillé '+adv+"</span></div></div>";
+}
+function pelotonTile(t,tgtMin){
+  let rows="";
+  for(const k of RKEYS){
+    const m=weekMinsRival(k,t);
+    rows+='<div class="pk-row"><span class="dot" style="background:var('+RIVALS[k].cvar+')"></span>'
+      +'<span class="nm">'+RIVALS[k].name+'</span>'
+      +'<span class="bar"><i style="width:'+clamp(m/tgtMin*100,0,100)+'%;background:var('+RIVALS[k].cvar+')"></i></span>'
+      +'<span class="vv">'+fmtH(m)+"</span></div>";
+  }
+  return '<div class="tile"><div class="tl">VS peloton</div>'+rows
+    +'<div class="tf" style="margin-top:9px"><span>conseillé '+fmtH(tgtMin)+"</span></div></div>";
+}
+
+/* ---- 30-day trends ---- */
+function renderTrends(){
+  const t=todayStr();
+  if(daysBetween(state.start,t)<10){
+    $("trends").innerHTML='<div style="color:var(--dim);font-size:13px">Encore trop tôt — les tendances apparaissent après une dizaine de jours de course.</div>';
+    return;
+  }
+  const t30=addDays(t,-30)<state.start?state.start:addDays(t,-30);
+  const t7=addDays(t,-7);
+  const rows=[];
+  function add(hex,label,val,delta,unit,invert){
+    if(delta===0)return;
+    rows.push({hex,label,val,delta,unit,good:invert?delta<0:delta>0});
+  }
+  const hNow=userHours(t);
+  add(personHex("Y"),"Tes heures",Math.round(hNow)+" h",Math.round(hNow-userHours(t30))," h",false);
+  const v7=state.sessions.filter(x=>x.date>t7&&x.date<=t).reduce((a,x)=>a+x.min,0);
+  const v14=state.sessions.filter(x=>x.date>addDays(t,-14)&&x.date<=t7).reduce((a,x)=>a+x.min,0);
+  add(personHex("Y"),"Ton volume hebdo",fmtH(v7),Math.round((v7-v14)/6)/10," h",false);
+  const gapNow=Math.round(rivalHours("M",t)-hNow);
+  const gapOld=Math.round(rivalHours("M",t30)-userHours(t30));
+  add(personHex("M"),"Écart avec "+RIVALS.M.name,(gapNow>0?"−":"+")+Math.abs(gapNow)+" h",gapNow-gapOld," h",true);
+  const mNow=userMetrics(t).covCredit,mOld=userMetrics(t30).covCredit;
+  add(personHex("Y"),"Couverture",Math.round(mNow*10)/10+" / "+ECRIT_UNITS,Math.round((mNow-mOld)*10)/10," u.",false);
+  let eNow=0,eOld=0;
+  for(const c of CHAPS){if(c.oral)continue;if(chapEroded(c.id,t))eNow++;if(chapEroded(c.id,t7))eOld++}
+  add("#d97706","Chapitres en érosion",eNow,eNow-eOld,"",true);
+  const hT=rivalHours("T",t);
+  add(personHex("T"),RIVALS.T.name+" — surveille-le",Math.round(hT)+" h",Math.round(hT-rivalHours("T",t30))," h",true);
+  const up=rows.filter(r=>r.good),dn=rows.filter(r=>!r.good);
+  function sec(title,list){
+    if(!list.length)return"";
+    let h='<div class="tsec">'+title+'</div>';
+    for(const r of list){
+      h+='<div class="trend-row"><span class="dot" style="background:'+r.hex+'"></span>'
+        +'<span class="lb">'+r.label+'</span><span class="vv">'+r.val+'</span>'
+        +chipD(r.delta,r.unit,r.good)+'</div>';
+    }
+    return h;
+  }
+  $("trends").innerHTML=(sec("En hausse",up)+sec("En baisse",dn))||'<div style="color:var(--dim);font-size:13px">Rien ne bouge pour le moment.</div>';
+}
+
+/* ---- names, from RIVALS and from nowhere else ----
+   Everything that used to spell a rival out in the markup is filled in here
+   instead: the welcome badges, both chart legends, the settings line. Renaming
+   somebody is now one edit in RIVALS, not a search through the file. */
+function rivalList(){
+  const n=RKEYS.map(k=>RIVALS[k].name);
+  return n.slice(0,-1).join(", ")+" et "+n[n.length-1];
+}
+function legendHTML(){
+  let h='<span><i style="background:var(--you)"></i>Toi</span>';
+  for(const k of RKEYS)
+    h+='<span><i style="background:var('+RIVALS[k].cvar+')"></i>'+RIVALS[k].name+"</span>";
+  return h;
+}
+function renderNames(){
+  const el=(id,html)=>{const e=$(id);if(e)e.innerHTML=html};
+  el("onbNames",RKEYS.map(k=>'<div><div class="avatar '+RIVALS[k].cls+'">'+RIVALS[k].name[0]
+      +'</div><div class="nm">'+RIVALS[k].name+"</div></div>").join(""));
+  el("legendStats",legendHTML());
+  el("rivalNames",rivalList());
+}
+
+function renderAll(){
+  renderNames();
+  renderGreeting();renderDash();renderToday();renderProg();renderAnn();renderStats();renderTrends();renderMilestones();renderSettings();
+}
+
+function renderDash(){
+  const t=todayStr();
+  renderRanking();renderRdv();renderChain();
+  const left=Math.max(0,daysBetween(t,state.exam));
+  const totalD=Math.max(daysBetween(state.start,state.exam),1);
+  $("countdown").textContent="J-"+left;
+  $("countFill").style.width=clamp((totalD-left)/totalD*100,0,100)+"%";
+  $("elapsedTxt").textContent="Jour "+(daysBetween(state.start,t)+1)+" sur "+(totalD+1);
+  $("examTxt").textContent="écrits : "+fmtDate(state.exam);
+  renderAnnCount();
+  const away=daysBetween(state.lastOpen,t);
+  if(away>=3){
+    let tot=0,man=0;
+    for(const k of RKEYS){
+      for(const d of rivalDays(k)){
+        if(d.date>state.lastOpen&&d.date<=t){tot+=d.min;if(k==="M")man+=d.min}
+      }
+    }
+    const um=state.sessions.filter(x=>x.date>state.lastOpen&&x.date<=t).reduce((a,x)=>a+x.min,0);
+    let msg="Depuis ta dernière ouverture ("+away+" j) : le peloton +"+fmtH(tot)+" ("+RIVALS.M.name+" +"+fmtH(man)+") · toi "+(um?"+"+fmtH(um):"0 h")+".";
+    const rOld=userRank(state.lastOpen),rNow=userRank(t);
+    if(rNow>rOld)msg+=" Pendant ton absence, tu es passé de "+ordFr(rOld)+" à "+ordFr(rNow)+".";
+    else if(rNow<rOld)msg+=" Et malgré tout, tu es remonté "+ordFr(rNow)+".";
+    $("absence").style.display="block";
+    $("absence").textContent=msg;
+  }else $("absence").style.display="none";
+  renderSummary();
+  renderTiles();
+  renderFeed();
+}
+
+/* Same furniture as the exam countdown, deliberately: a paper is read the same
+   way a deadline is read. The exam is the end of the road; this one is the next
+   place the road is measured. It rolls on to the following paper once the
+   shared one is behind, so the card never sits there dead. */
+function renderAnnCount(){
+  const card=$("annCount"),nx=nextAnnale();
+  if(!nx){card.style.display="none";return}
+  card.style.display="";
+  const t=todayStr();
+  const left=daysBetween(t,nx.date);
+  const span=Math.max(daysBetween(nx.from,nx.date),1);
+  $("annCountLbl").textContent=nx.shared?"Annale commune":"Prochaine annale";
+  $("annCountdown").textContent=left<=0?"aujourd'hui":"J-"+left;
+  $("annCountFill").style.width=clamp((span-left)/span*100,0,100)+"%";
+  /* Two days, and the card has to say so: turning up on the Saturday for what
+     is written as one date and discovering the orals are the next morning is
+     the sort of surprise a rehearsal exists to remove. */
+  $("annCountSub").textContent=nx.shared
+    ?"écrits puis oraux, tout le peloton à "+ANNALE1_H+" h"
+    :"recommandée";
+  $("annCountDate").textContent=nx.shared
+    ?fmtDate(nx.date)+" et "+fmtDate(addDays(nx.date,1))
+    :fmtDate(nx.date);
+}
+
+/* One cell per day, from the Monday of the first week to the exam. Depth of
+   green = the day's minutes against your daily target, so a long day reads
+   differently from a scraped one — but ANY green day breaks nothing, which is
+   the whole point: the thing you are protecting is the wall, not a number. */
+/* ================= THE APPOINTMENT =================
+   One tap for an hour, one for a length, and the day has a plan rather than an
+   intention. What the evidence supports is not the promise itself but its
+   SHAPE: naming when and how long turns "I'll work tomorrow" into something
+   that can actually start.
+
+   Three rules hold the whole thing up, and dropping any of them turns it into
+   another way to fail:
+     · a partial session counts as kept — forty minutes of ninety is a kept
+       appointment, not a broken one;
+     · declaring a rest day is a legitimate answer that breaks nothing;
+     · changing your mind, at any hour, costs nothing.
+   A commitment device that makes committing expensive stops being used, and
+   then there is nothing left to keep. */
+function rdvTarget(){
+  // Before eight in the evening with the day still open, the appointment that
+  // matters is today's. Otherwise it is tomorrow's — which is when you are in
+  // a position to decide it calmly.
+  const t=todayStr(),h=(new Date()).getHours(),r=state.rdv[t];
+  /* An appointment taken today stays on screen until it is kept — the twenty
+     minutes that validate a day are not the same thing as the half-promise
+     that honours an appointment, and dropping the card at the first threshold
+     hid the second one entirely. */
+  if(r&&r.min>0&&rdvKept(t)!==true&&h<22)return t;
+  return (!streakDays().todayDone&&h<20)?t:addDays(t,1);
+}
+function rdvKept(date){
+  const r=state.rdv[date];
+  if(!r)return null;
+  // the week's one planned rest is neither kept nor broken; a second one is
+  // simply a day you said you would not work, twice
+  if(r.min===0)return restLegit(date)?null:false;
+  return dayCredit(date)>=rdvBar(r.min);
+}
+/* Half of what you promised, and never below the floor that validates a day at
+   all. A partial session still counts — a bad day half-honoured is honoured,
+   which is the part worth protecting — but the number you set is an engagement
+   again rather than decoration.
+   The rule before this was a flat twenty minutes whatever you had promised, so
+   promising six hours and doing twenty-five read as KEPT, while fifteen minutes
+   of a thirty-minute promise did not. It rewarded the inflated promise and
+   punished the modest, honest one. */
+function rdvBar(promised){return Math.max(STREAK_MIN,Math.round(promised/2))}
+/* Is this week's single rest still available for that date? Asked before the
+   fact exists, so it looks at the other days of the same week. */
+function restLeft(date){
+  let d=mondayOf(date);
+  const end=addDays(d,6);
+  while(d<=end){
+    if(d!==date){const x=state.rdv[d];if(x&&x.min===0)return false}
+    d=addDays(d,1);
+  }
+  return true;
+}
+let rdvPickH=null,rdvPickM=null;
+function renderRdv(){
+  const el=$("rdvBody"),t=todayStr(),d=rdvTarget();
+  const when=d===t?"aujourd'hui":"demain";
+  const r=state.rdv[d];
+
+  if(r){
+    let head,chip="";
+    if(r.min===0){
+      head="Repos prévu "+when;
+      chip=restLegit(d)?'<span class="chipd nt">la chaîne tient</span>'
+                       :'<span class="chipd dn">2ᵉ de la semaine — compte comme manqué</span>';
+    }
+    else{
+      head=when+" à "+r.h+":00 · "+fmtH(r.min);
+      const kept=rdvKept(d);
+      if(d===t&&kept===true)chip='<span class="chipd up">✓ Tenu</span>';
+      else if(d===t){
+        // "pas encore" said nothing about what would settle it
+        const left=rdvBar(r.min)-dayCredit(d);
+        chip='<span style="color:var(--dim);font-size:12px">encore '+fmtH(left)+" pour tenir</span>";
+      }
+    }
+    el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span>"+chip+"</div>"
+      +'<button class="rdv-off" id="rdvChange">Changer</button>';
+    $("rdvChange").addEventListener("click",()=>{rdvPickH=null;rdvPickM=null;drawRdvPicker(d,when)});
+    return;
+  }
+  drawRdvPicker(d,when);
+}
+function drawRdvPicker(d,when){
+  const el=$("rdvBody");
+  const hours=[6,8,10,14,17,20];
+  const tgt=dailyTarget();
+  const mins=[...new Set([30,60,120,240,tgt])].sort((a,b)=>a-b);
+  const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
+    +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
+  el.innerHTML='<div class="rdv-top"><span class="st">Rien de prévu '+when+"</span></div>"
+    +row("À quelle heure ?",hours,v=>v+":00",rdvPickH,"h")
+    +row("Combien de temps ?",mins,v=>fmtH(v),rdvPickM,"m")
+    +(restLeft(d)
+        ?'<button class="rdv-off" id="rdvOff">'+(when==="demain"?"Demain":"Aujourd'hui")
+          +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
+        :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
+  el.querySelectorAll("[data-h]").forEach(b=>b.addEventListener("click",()=>{
+    rdvPickH=+b.dataset.h;maybeSaveRdv(d,when)}));
+  el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{
+    rdvPickM=+b.dataset.m;maybeSaveRdv(d,when)}));
+  const off=$("rdvOff");
+  if(off)off.addEventListener("click",async()=>{
+    await Peloton.record("rendezVousPris",{date:d,h:0,min:0});
+    toast("Repos prévu "+when+". La chaîne tient — c'est le seul de la semaine.");
+  });
+}
+async function maybeSaveRdv(d,when){
+  if(rdvPickH===null||rdvPickM===null){drawRdvPicker(d,when);return}
+  const h=rdvPickH,m=rdvPickM;rdvPickH=null;rdvPickM=null;
+  await Peloton.record("rendezVousPris",{date:d,h,min:m});
+  toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+".");
+}
+
+function renderChain(){
+  const t=todayStr(),tgt=dailyTarget();
+  const byDay=new Map();
+  for(const x of state.sessions){
+    if(!sessOnTime(x))continue;                 // same rule as the streak
+    byDay.set(x.date,(byDay.get(x.date)||0)+x.min);
+  }
+  let html="",lit=0,col=0,months="",lastM=-1;
+  let d=mondayOf(state.start);
+  while(d<=state.exam){
+    // month band: the label sits above the column its month opens in
+    if(col%7===0){
+      const m=s2d(d).getMonth();
+      if(m!==lastM){lastM=m;months+='<span style="left:'+(col/7*13)+'px">'+MOIS[m]+"</span>"}
+    }
+    let cls="out",tip=fmtDate(d);
+    if(d>=state.start){
+      const m=byDay.get(d)||0;
+      if(d>t){cls="fut";tip+=" — à venir"}
+      else if(m===0&&restLegit(d)){cls="rest";tip+=" — repos prévu";lit++}
+      else if(m===0){cls="";tip+=" — rien"}
+      else{
+        /* 25 / 50 / 100 / 150 % du jour visé. À 2 pour le dernier palier,
+           un objectif de six heures demandait DOUZE heures dans la journée
+           pour atteindre le vert le plus foncé : le palier était mort, et
+           toute journée sous trois heures tombait dans le plus pâle. */
+        const r=m/tgt;
+        cls=r>=1.5?"l4":(r>=1?"l3":(r>=0.5?"l2":"l1"));
+        tip+=" — "+fmtH(m);
+        // Any green day counts here, including one below the streak floor: the
+        // caption has to agree with what the grid shows, and the grid lights
+        // the day you sat down for eighteen minutes. The streak is stricter —
+        // that is its job, not this one's.
+        lit++;
+      }
+      if(d===t)cls+=" today";
+    }
+    html+='<i class="'+cls.trim()+'" title="'+tip+'"></i>';
+    d=addDays(d,1);col++;
+  }
+  $("chainGrid").innerHTML=html;
+  $("chainMonths").innerHTML=months;
+  // Rows run Monday to Sunday. Only three are labelled — Monday, Wednesday,
+  // Friday — as GitHub does: a label on every other row crowds the column, and
+  // three is enough to read the grid vertically.
+  $("chainDays").innerHTML=[0,1,2,3,4,5,6]
+    .map(i=>"<div>"+([0,2,4].includes(i)?JOURS[(i+1)%7]:"")+"</div>").join("");
+
+  const sk=streakDays(),best=bestStreak();
+  $("chainStreak").textContent=sk.n?sk.n+" jour"+(sk.n>1?"s":"")+" d'affilée":"Aucun jour d'affilée";
+  // A tick, not an arrow: `chipd up` normally carries ▲ because it reports a
+  // rise of so much. This is a state, not a movement — it is either true or it
+  // is not, and an arrow pointing up says neither.
+  $("chainToday").innerHTML=sk.todayDone
+    ? '<span class="chipd up">✓ Jour validé</span>'
+    : '<span style="color:var(--warn);font-size:12px">Jour en attente de validation — au travail !</span>';
+  $("chainFoot").textContent=(best>sk.n?"record "+best+" j · ":"")
+    +lit+" jour"+(lit>1?"s":"")+" allumé"+(lit>1?"s":"")
+    +" depuis le "+fmtDate(state.start);
+}
+
+function renderRanking(){
+  const t=todayStr(),t7=addDays(t,-7);
+  const early=daysBetween(state.start,t)<7;
+  const ppl=[{k:"Y",name:"Toi",cls:"y",p:userHours(t),p7:early?null:userHours(t7)}];
+  for(const k of RKEYS)ppl.push({k,name:RIVALS[k].name,cls:RIVALS[k].cls,p:rivalHours(k,t),p7:early?null:rivalHours(k,t7)});
+  /* The bar is read against the leader, not against a fixed maximum: hours
+     have no ceiling the way a percentage did, and a bar scaled to one would
+     sit at a sliver for months. */
+  const lead=Math.max(...ppl.map(x=>x.p),1);
+  const now=[...ppl].sort((a,b)=>b.p-a.p);
+  const prevRank={};
+  if(!early){
+    const prev=[...ppl].sort((a,b)=>b.p7-a.p7);
+    prev.forEach((x,i)=>prevRank[x.k]=i);
+  }
+  const GRAD={Y:"var(--grad-you)",M:"var(--grad-her)",I:"var(--grad-ines)",T:"var(--grad-thomas)"};
+  let html="";
+  now.forEach((x,i)=>{
+    let mv="",mvc="";
+    if(!early){
+      const pr=prevRank[x.k];
+      if(pr>i){mv="↑";mvc="up"}else if(pr<i){mv="↓";mvc="dn"}
+    }
+    let dl;
+    if(x.p7==null)dl='<span class="dl">jour '+(daysBetween(state.start,t)+1)+'</span>';
+    else{
+      const dpp=Math.round(x.p-x.p7);
+      dl=chipD(dpp," h",dpp>0);
+    }
+    const col=x.k==="Y"?"var(--you)":"var("+RIVALS[x.k].cvar+")";
+    html+='<div class="rank-row r'+(i+1)+(x.k==="Y"?" me":"")+'">'
+      +'<div class="pos">'+(i+1)+'</div>'
+      +'<div class="avatar '+x.cls+'">'+x.name[0]+'</div>'
+      +'<div class="mid"><div class="nl"><span class="nm">'+x.name+'</span>'
+      +(mv?'<span class="mv '+mvc+'">'+mv+'</span>':'')+'</div>'
+      +'<div class="gbar"><i style="width:'+Math.round(x.p/lead*100)+'%;background:'+GRAD[x.k]+'"></i></div>'
+      +(x.k!=="Y"?'<span class="prof">'+RIVALS[x.k].profil+'</span>':'')
+      +'</div>'
+      +'<div class="right"><div class="pp" style="color:'+col+'">'+Math.round(x.p)+" h</div>"
+      +dl+'</div></div>';
+  });
+  const daysLeft=daysBetween(t,state.exam);
+  if(daysLeft<=21&&daysLeft>=0)
+    html+='<div style="font-size:12px;color:var(--dim);font-style:italic;padding:10px 2px 2px;border-top:1px solid var(--line)">Le jour J, ce tableau n\'existera pas. Seule ta copie sera dans la salle.</div>';
+  $("ranking").innerHTML=html;
+}
+
+/* "Les courbes" used to be drawn here — your probability, the peloton's, and
+   the grey ghost, week by week. It went because the quantity it plotted could
+   not be read: anchored on the published admission rate, squeezed by `damp` at
+   the start, calibrated against nothing. The tiles say the same thing in hours,
+   in a unit that can be checked.
+   The probability itself survives where it still means something: the
+   standing, the weekly summary, the Stats page, the feedback after a session —
+   all comparisons between candidates who pass through the identical function,
+   which is its one honest use. */
+function weekMinsUser(ref){
+  const from=mondayOf(ref);
+  return state.sessions.filter(x=>x.date>=from&&x.date<=ref).reduce((a,x)=>a+x.min,0);
+}
+function weekMinsRival(k,ref){
+  const from=mondayOf(ref),t=todayStr();
+  let m=0;
+  // the weekly total (podium, debrief) follows the same rule as the odds:
+  // today's session only joins the count when its time comes
+  for(const d of rivalDays(k)){
+    if(d.date>=from&&d.date<=ref&&(d.date!==t||sessDue(d,t)))m+=d.min;
+  }
+  return m;
+}
+
+/* FEED ARRIVAL THRESHOLD — a SINGLE definition, shared by buildFeed and by the
+   boot ticker. The `d.date>t` filter works at DAY granularity: without a clock
+   guard, today's session showed up from midnight — a rival "worked at 7:00 pm"
+   when it is 5 pm, past-tense note included. Rule shared with buildNotifPlan:
+   a session enters the feed at the instant it rings. */
+function sessDue(d,t){
+  if(d.date<t)return true;
+  if(d.date>t||!d.sess)return false;
+  const n=new Date();
+  return (d.sess.h!=null?d.sess.h:18)*60+(d.sess.m||0)<=n.getHours()*60+n.getMinutes();
+}
+/* number of rival sessions that have already landed today: the ticker uses it
+   as a change signal (one more = one entry to bring on screen). */
+function dueTodayCount(){
+  const t=todayStr();
+  let n=0;
+  for(const k of RKEYS){
+    const days=rivalDays(k);
+    const idx=clamp(daysBetween(state.start,t),0,days.length-1);
+    const d=days[idx];
+    if(d&&d.date===t&&d.sess&&sessDue(d,t))n++;
+  }
+  return n;
+}
+function buildFeed(){
+  const t=todayStr();
+  const items=[];
+  for(const k of RKEYS){
+    const days=rivalDays(k);
+    for(const d of days){
+      if(d.date>t)break;
+      if(!d.sess)continue;
+      if(!sessDue(d,t))continue;
+      items.push({date:d.date,who:k,cls:RIVALS[k].cls,name:RIVALS[k].name,min:d.min,
+        // 17:55, never "17 h 55" — the feed prints a duration two lines below,
+        // and "17 h 55" beside "4 h 25" is two of the same shape meaning
+        // entirely different things.
+        hm:d.sess.h!=null?(d.sess.h+":"+pad(d.sess.m)):null,
+        label:d.sess.chap+" — "+TYPE_LABEL[d.sess.type],
+        week:weekMinsAt(days,d.date),
+        note:rivalNoteFor(k,d.date,d.sess)});
+    }
+  }
+  for(const s of state.sessions){
+    const chap=s.chap?(" · "+s.chap):"";
+    const st=sessTime(s);
+    items.push({date:s.date,who:"Y",cls:"y",name:"Toi",min:s.min,id:s.id,
+      label:MAT_LABEL[s.mat]+" — "+TYPE_LABEL[s.type]+chap+(s.manual?" °":""),
+      hm:st?(st.noted?"noté à "+st.hm:st.hm):null,
+      week:null,note:null});
+  }
+  const ord={Y:0,M:1,I:2,T:3};
+  items.sort((a,b)=>b.date<a.date?-1:(b.date>a.date?1:ord[a.who]-ord[b.who]));
+  return items;
+}
+function weekMinsAt(days,ref){
+  const from=mondayOf(ref);
+  let m=0;
+  for(const d of days){if(d.date>=from&&d.date<=ref)m+=d.min}
+  return m;
+}
+function renderFeed(){
+  const items=buildFeed();
+  const shown=items.slice(0,feedShown);
+  let html="";
+  for(const it of shown){
+    html+='<div class="entry"><div class="avatar '+it.cls+'">'+it.name[0]+'</div><div class="body">'+
+      '<div class="top"><span>'+it.name+'</span></div>'+
+      '<div class="label">'+it.label+'</div>'+
+      '<div class="meta">'+fmtDate(it.date)+(it.hm?", "+it.hm:"")
+        +(it.week!=null?' · semaine '+fmtH(it.week):'')+'</div>'+
+      (it.note?'<div class="note" style="border-left-color:'+personHex(it.who)+'">« '+it.note+' »</div>':'')+
+      '</div>'+
+      // The bin moves here with the duration: the date it used to hang from is
+      // now at the bottom of the entry.
+      '<div class="dur">'+fmtH(it.min)
+        +(it.id?'<button class="del" data-del="'+it.id+'" title="Supprimer cette session">'+TRASH+'</button>':'')
+      +'</div></div>';
+  }
+  if(!items.length)html='<div style="color:var(--dim);font-size:13px">Rien pour l\'instant. Le premier qui logue une session prend la tête.</div>';
+  $("feed").innerHTML=html;
+  $("moreFeed").style.display=items.length>feedShown?"block":"none";
+}
+
+/* The headline is the count that only ever goes up. The streak keeps its
+   demanding floor, but it is demoted to a second line and paired with its own
+   record: a broken streak now costs a number, not the whole page. */
+function renderToday(){
+  const t=todayStr();
+  const mw=monthWorked(),sk=streakDays(),best=bestStreak();
+  let head='<div style="margin-bottom:3px"><b>'+mw.n+" jour"+(mw.n>1?"s":"")
+    +" travaillé"+(mw.n>1?"s":"")+"</b> en "+MOIS[s2d(t).getMonth()]
+    +' <span style="color:var(--dim)">sur '+mw.elapsed+" écoulé"+(mw.elapsed>1?"s":"")+"</span></div>";
+  head+='<div style="margin-bottom:9px;color:var(--dim);font-size:13px">'
+    +(sk.n?"Série : <b>"+sk.n+" j</b>":"Série : —")
+    +(best>sk.n?" · record "+best+" j":"")
+    +(sk.todayDone?' <span class="chipd up">✓ Jour validé</span>'
+      :" · Jour en attente de validation — au travail !")+"</div>";
+  const ss=state.sessions.filter(x=>x.date===t);
+  if(!ss.length){$("todayList").innerHTML=head+'<span style="color:var(--dim)">Aucune session aujourd\'hui.</span>';return}
+  let tot=0,html=head;
+  for(const s of ss){tot+=s.min;html+='<div style="padding:4px 0">'+MAT_LABEL[s.mat]+' — '+TYPE_LABEL[s.type]+' · <b>'+fmtH(s.min)+'</b></div>'}
+  html+='<div style="margin-top:6px;color:var(--dim)">Total : '+fmtH(tot)+'</div>';
+  $("todayList").innerHTML=html;
+}
+
+function renderProg(){
+  const t=todayStr();
+  let nT=0,nC=0,nE=0;
+  for(const c of CHAPS){
+    if(c.oral)continue;
+    const o=state.chaps[c.id];
+    if(o&&o.s===1)nT++;
+    if(o&&o.s===2)nC++;
+    if(chapEroded(c.id,t))nE++;
+  }
+  $("covT").textContent=nT;
+  $("covC").textContent=nC;
+  $("covEro").textContent=nE;
+  $("covE").textContent="≈ "+Math.round(expectedUnits(t))+" / "+ECRIT_UNITS;
+  $("covFill").style.width=clamp(userMetrics(t).covCredit/ECRIT_UNITS*100,0,100)+"%";
+  let html="",lastG="";
+  for(const c of CHAPS){
+    if(c.g!==lastG){html+='<div class="chapgroup"><h3>'+c.g+'</h3></div>';lastG=c.g}
+    const o=state.chaps[c.id];
+    const st=o?o.s:0;
+    let stTxt=st===2?"consolidé":(st===1?"traité":"");
+    let eroCls="";
+    if(st>0&&chapEroded(c.id,t)){
+      const age=daysBetween(chapLastTouch(c.id,t),t);
+      stTxt="s'effrite · "+age+" j";eroCls=" ero";
+    }
+    const box=st===2?"✓✓":(st===1?"✓":"");
+    html+='<div class="chap s'+st+'" data-ch="'+c.id+'"><div class="box">'+box+'</div><div class="nm">'+c.n+'</div><div class="st'+eroCls+'">'+stTxt+'</div></div>';
+  }
+  $("progList").innerHTML=html;
+}
+/* event delegation: a single listener for every chapter */
+async function onProgClick(e){
+  const el=e.target.closest(".chap");
+  if(!el)return;
+  const id=el.getAttribute("data-ch");
+  // The status is re-read at the last moment (see Peloton.update): two taps in
+  // quick succession really do advance by two steps.
+  await Peloton.update(()=>{
+    const current=state.chaps[id];
+    // Unticking and demoting are facts like any other: they propagate, and
+    // nothing can "reimpose" the former, higher status.
+    return [{kind:"chapterStatusSet",
+             data:{id,status:((current?current.s:0)+1)%3,date:todayStr()}}];
+  });
+  checkMilestones(false);
+}
+
+/* The next paper, and the point its countdown is measured from. ONE definition,
+   used by the Annales tab and by the countdown on the peloton page alike: two
+   places that disagreed about the date would be worse than no date at all.
+   Every paper is now a collective one — the whole peloton, one a month, on the
+   day of the month it all began. The old rule that recommended a Saturday
+   twenty-five days after your last one is gone: with a monthly fixture it only
+   ever proposed a second paper five days before the real one, and on a peloton
+   with nothing logged yet it recommended four hours of exam conditions on day
+   four, before a single chapter had been covered. */
+function nextAnnale(){
+  const t=todayStr(),sh=nextShared(t);
+  if(!sh)return null;                       // the exam is closer than the next one
+  const sorted=[...state.annales].sort((a,b)=>a.date<b.date?-1:1);
+  const lastA=sorted.length?sorted[sorted.length-1].date:null;
+  const prev=prevShared(sh);
+  // late = the previous collective paper has gone by and nothing was logged for it
+  const late=prev!==state.start&&(!lastA||lastA<prev);
+  return {date:sh,shared:true,from:prev,late};
+}
+
+function renderAnn(){
+  const t=todayStr();
+  const nx=nextAnnale();
+  if(nx){
+    const inD=daysBetween(t,nx.date);
+    $("nextAnn").innerHTML=(nx.shared?"Annale commune du peloton : <b>"
+                                     :"Prochaine annale recommandée : <b>")+fmtDate(nx.date)
+      +(nx.shared?" et "+fmtDate(addDays(nx.date,1))+", à partir de "+ANNALE1_H+" h":"")+"</b>"
+      +(inD>0?" — dans "+inD+" j":" — c'est aujourd'hui")
+      +(nx.shared?' <span class="chipd nt">'+rivalList()+' la composent aussi</span>':"")
+      +(nx.late?' <span class="chipd dn">▼ en retard</span>':"");
+  }else $("nextAnn").innerHTML="Plus d'annale planifiée : les écrits sont là.";
+  /* Entry is open on the two examination days and shut on every other. A mark
+     typed on the Tuesday after is not a result, it is a memory — the same
+     reason a session can no longer be backdated. */
+  const cur=todayAnnale();
+  $("annForm").style.display=cur?"block":"none";
+  $("annClosed").style.display=cur?"none":"block";
+  if(cur){
+    const ex=state.annales.find(a=>a.date===cur.date);
+    for(const k of ["E1","E2","O1","O2"]){
+      const f=$("ann"+k),v=ex?ex[k.toLowerCase()]:null;
+      if(document.activeElement!==f)f.value=v==null?"":v;
+    }
+    $("annWhich").innerHTML="Annale du <b>"+fmtDate(cur.date)+"</b> — "
+      +(cur.day===1?"jour 1, les écrits. Les oraux se saisiront demain, ils compléteront celle-ci."
+                   :"jour 2, les oraux. Les écrits d'hier sont déjà là.");
+  }else{
+    $("annClosed").innerHTML=nx
+      ?"La saisie n'ouvre que ces deux jours-là."
+      :"Plus d'annale planifiée : les écrits sont là.";
+  }
+  const nm={e1:"É1",e2:"É2",o1:"O1",o2:"O2"};
+  const list=[...state.annales].sort((a,b)=>b.date<a.date?-1:1);
+  let html="";
+  for(const a of list){
+    const parts=[];
+    for(const k in nm)if(a[k]!=null)parts.push(nm[k]+" "+String(a[k]).replace(".",","));
+    const sc=annScore(a);
+    html+='<div class="ann-item"><span>'+fmtDate(a.date)+'</span><span>'
+      +'<span style="color:var(--dim)">'+parts.join(" · ")+'</span> — <b style="color:var(--txt)">'
+      +(sc==null?"—":(Math.round(sc*10)/10).toString().replace(".",","))+'/20</b>'
+      +(annFull(a)?"":' <span style="color:var(--faint);font-size:11.5px">partielle</span>')
+      +'<button class="del" data-dela="'+a.id+'" title="Supprimer cette annale">'+TRASH+'</button></span></div>';
+  }
+  $("annList").innerHTML=html||'<div style="color:var(--dim);font-size:13px">Aucune annale saisie. La première te donnera un point de comparaison pour toutes les suivantes.</div>';
+}
+
+function renderStats(){
+  const t=todayStr();
+  const weeks=[];
+  let mon=mondayOf(t);
+  for(let i=0;i<8;i++){weeks.unshift(mon);mon=addDays(mon,-7)}
+  let bars="",labels="",mx=60;
+  const data=weeks.map(wk=>{
+    const end=addDays(wk,6);
+    const ref=end<t?end:t;
+    const um=state.sessions.filter(x=>x.date>=wk&&x.date<=ref).reduce((a,x)=>a+x.min,0);
+    const rm={};
+    for(const k of RKEYS){
+      let m=0;
+      for(const d of rivalDays(k)){if(d.date>=wk&&d.date<=ref)m+=d.min}
+      rm[k]=m;mx=Math.max(mx,m);
+    }
+    mx=Math.max(mx,um);
+    return {wk,um,rm};
+  });
+  for(const d of data){
+    bars+='<div class="scol"><div class="sbar y" style="height:'+(d.um/mx*100)+'%"></div>'
+      +'<div class="sbar m" style="height:'+(d.rm.M/mx*100)+'%"></div>'
+      +'<div class="sbar i" style="height:'+(d.rm.I/mx*100)+'%"></div>'
+      +'<div class="sbar t" style="height:'+(d.rm.T/mx*100)+'%"></div></div>';
+    const dd=s2d(d.wk);
+    labels+='<div>'+dd.getDate()+"/"+(dd.getMonth()+1)+'</div>';
+  }
+  $("statBars").innerHTML=bars;
+  $("statLabels").innerHTML=labels;
+  const um=userMetrics(t);
+  const totMin=state.sessions.reduce((a,x)=>a+x.min,0);
+  let html='Toi : <b>'+fmtH(totMin)+'</b> · '+state.sessions.length+' sessions · '+um.activeTotal+' jours actifs<br>';
+  for(const k of RKEYS){
+    const days=rivalDays(k);
+    const idx=clamp(daysBetween(state.start,t),0,days.length-1);
+    html+=RIVALS[k].name+' : <b>'+fmtH(days[idx].cumMin)+'</b><br>';
+  }
+  html+='Conseillé cumulé à ce jour : <b>'+Math.round(targetCum(t))+' h</b> — toi : '+Math.round(um.wh)+' h';
+  $("totals").innerHTML=html;
+}
+
+function renderSettings(){
+  $("examDate").value=state.exam;
+  $("dailyTargetInp").value=dailyTarget();
+  $("refTotalInp").value=refTotal();
+  /* The title carries the current value: change it to 1 200 and it reads
+     "Rythme 1 200 h conseillé". A number frozen into a label goes stale the
+     first time the setting moves. */
+  $("refTotalTit").textContent="Rythme "+refTotal()+" h conseillé pour le CRPE";
+  $("refTotalImp").innerHTML="Sur ta préparation, cela fait <b>"
+    +fmtH(refTotal()/(Math.max(daysBetween(state.start,state.exam),1)/7)*60)
+    +" par semaine</b> en moyenne.";
+  $("thLight").classList.toggle("sel",state.theme!=="dark");
+  $("thDark").classList.toggle("sel",state.theme==="dark");
+}
+
+/* ================= SUNDAY DEBRIEF ================= */
+function maybeDebrief(){
+  const t=todayStr();
+  const sunEve=dow(t)===0&&(new Date()).getHours()>=17;
+  let from,to,target;
+  if(sunEve){from=mondayOf(t);to=t;target=isoWeek(t)}
+  else{
+    to=addDays(mondayOf(t),-1);from=addDays(to,-6);target=isoWeek(from);
+    if(to<state.start)return;
+  }
+  if(state.debriefSeen===target)return;
+  if(from<state.start)from=state.start;
+  const pFrom=addDays(from,-1)<state.start?state.start:addDays(from,-1);
+  const ppl=[{k:"Y",name:"Toi",cls:"y",h:weekMinsUser(to),p:userHours(to),pf:userHours(pFrom)}];
+  for(const k of RKEYS)ppl.push({k,name:RIVALS[k].name,cls:RIVALS[k].cls,h:weekMinsRival(k,to),p:rivalHours(k,to),pf:rivalHours(k,pFrom)});
+  const sorted=[...ppl].sort((a,b)=>b.p-a.p);
+  let rows="";
+  sorted.forEach((x,i)=>{
+    const dp=Math.round(x.p-x.pf);
+    rows+='<div class="db-row"><span style="width:14px;color:var(--faint);font-weight:800">'+(i+1)+'</span>'
+      +'<div class="avatar '+x.cls+'">'+x.name[0]+'</div>'
+      +'<span class="n">'+x.name+'</span>'
+      +'<span class="hh">'+fmtH(x.h)+'</span>'
+      +'<span class="dp">'+chipD(dp," h",x.k==="Y"?dp>0:dp<0)+'</span></div>';
+  });
+  const me=ppl[0],manon=ppl.find(x=>x.k==="M"),thomas=ppl.find(x=>x.k==="T");
+  let verdict;
+  if(me.h===0)verdict="Semaine blanche. Le peloton, lui, a roulé.";
+  else if(me.h>=Math.max(...ppl.map(x=>x.h)))verdict="Plus gros volume du peloton cette semaine. Ça se verra sur la courbe.";
+  else if(thomas.h>me.h)verdict=thomas.name+" a fait plus d'heures que toi cette semaine. "+thomas.name+".";
+  else if(manon.h>me.h)verdict=manon.name+" te met "+fmtH(manon.h-me.h)+" dans la vue cette semaine.";
+  else verdict="Tu as pris "+fmtH(me.h-manon.h)+" d'avance sur "+manon.name+" cette semaine.";
+  $("dbSub").textContent="Du "+fmtDate(from)+" au "+fmtDate(to);
+  $("dbRows").innerHTML=rows;
+  $("dbVerdict").innerHTML=verdict+'<br><span style="opacity:.85">'+weekNarrative(from,to)+"</span>";
+  $("debriefBg").classList.add("open");
+  $("dbClose").onclick=()=>{
+    Peloton.record("debriefSeen",{week:target});
+    $("debriefBg").classList.remove("open");
+  };
+}
+
+/* ================= TOAST ================= */
+let toastTimer=null;
+function toast(msg,action){
+  const el=$("toast"),b=$("toastBtn");
+  $("toastMsg").innerHTML=msg;
+  if(action){b.style.display="inline";b.textContent=action.label;
+    b.onclick=()=>{hideToast();action.fn()}}
+  else b.style.display="none";
+  el.classList.add("show");
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(hideToast,action?6000:3200);
+}
+function hideToast(){
+  $("toast").classList.remove("show");
+  if(toastTimer){clearTimeout(toastTimer);toastTimer=null}
+}
+
+/* ================= DELETION (with undo) ================= */
+const TRASH='<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 11v6M14 11v6"/></svg>';
+/* Deleting means recording a tombstone: it travels, it is final, and nothing
+   caps it. Undoing means recording the session again under a BRAND-NEW
+   identifier — the old one's tombstone stays valid everywhere, so no duplicate
+   and no surprise re-deletion. */
+function delSession(id){
+  const item=state.sessions.find(x=>x.id===id);
+  if(!item)return;
+  Peloton.record("sessionDeleted",{id});
+  toast("Session supprimée.",{label:"Annuler",fn:()=>{
+    Peloton.record("sessionLogged",Object.assign({},item,{id:uid("s")}));
+  }});
+}
+function delAnnale(id){
+  const item=state.annales.find(x=>x.id===id);
+  if(!item)return;
+  Peloton.record("annaleDeleted",{id});
+  toast("Annale supprimée.",{label:"Annuler",fn:()=>{
+    Peloton.record("annaleLogged",Object.assign({},item,{id:uid("a")}));
+  }});
+}
+
+/* ---- narrative debrief: a diagnosis + one action ---- */
+function weekNarrative(from,to){
+  const days=new Set(),byType={};let tot=0;
+  for(const x of state.sessions){
+    if(x.date>=from&&x.date<=to){days.add(x.date);tot+=x.min;byType[x.type]=(byType[x.type]||0)+x.min}
+  }
+  const nD=days.size;
+  let best=nD>0,cur=mondayOf(state.start);
+  while(cur<from){
+    const end=addDays(cur,6),s=new Set();
+    for(const x of state.sessions){if(x.date>=cur&&x.date<=end)s.add(x.date)}
+    if(s.size>=nD)best=false;
+    cur=addDays(cur,7);
+  }
+  let diag=nD+" jour"+(nD>1?"s":"")+" travaillé"+(nD>1?"s":"")+" sur 7";
+  if(best&&daysBetween(state.start,from)>14)diag+=" — ta meilleure régularité depuis le début";
+  diag+=". ";
+  /* Promises before hours. Fourteen hours is a quantity; five appointments out
+     of six is a record of decisions taken and honoured, and that is the thing
+     which compounds over eight months. The week's one planned rest sits outside
+     the count — it was kept by definition. */
+  let took=0,held=0,rested=false;
+  const tNow=todayStr();
+  for(let dd=from;dd<=to&&dd<=tNow;dd=addDays(dd,1)){   // a day still ahead cannot be missed
+    const k=rdvKept(dd);
+    if(k===null){if(state.rdv[dd]&&state.rdv[dd].min===0)rested=true;continue}
+    took++;if(k)held++;
+  }
+  if(took)diag+="Rendez-vous tenus : "+held+" sur "+took+(rested?", plus ton repos":"")+". ";
+  else if(rested)diag+="Repos de la semaine pris. ";
+  const passive=(byType.relecture||0)+(byType.fiches||0);
+  const active=(byType.exercices||0)+(byType.annale||0);
+  let action;
+  if(tot===0)action="Action : une session de 25 min demain matin, n'importe laquelle. Remonter en selle, c'est tout.";
+  else if(passive>0&&active<tot*0.25)action="Faiblesse : presque que du passif (relecture, fiches). Action : ouvre chaque session par 20 min d'exercices.";
+  else{
+    const sorted=[...state.annales].sort((a,b)=>a.date<b.date?-1:1);
+    const lastAnn=sorted.length?sorted[sorted.length-1].date:null;
+    if(!lastAnn||daysBetween(lastAnn,to)>35)action="Action : cale ton annale complète ce week-end — le juge de paix attend.";
+    else{
+      let nE=0;for(const c of CHAPS){if(!c.oral&&chapEroded(c.id,to))nE++}
+      action=nE>0?("Action : retouche les "+nE+" chapitre"+(nE>1?"s":"")+" en érosion, 30 min chacun.")
+        :"Action : continue exactement pareil.";
+    }
+  }
+  return diag+action;
+}
+
+/* ================= TIMER ================= */
+let tick=null;
+function timerState(){
+  if(state.timerStart)return "run";
+  if(state.timerAcc>0)return "pause";
+  return "idle";
+}
+function timerElapsed(){
+  return Math.floor(((state.timerAcc||0)+(state.timerStart?Date.now()-state.timerStart:0))/1000);
+}
+function fmtT(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+  return h?h+":"+pad(m)+":"+pad(s):m+":"+pad(s)}
+function updateTimerUI(){
+  const s=timerState(),btn=$("timerBtn"),pb=$("pauseBtn");
+  btn.classList.toggle("on",s==="run");
+  btn.classList.toggle("paused",s==="pause");
+  btn.childNodes[0].textContent=s==="idle"?"DÉMARRER":"TERMINER";
+  $("timerT").textContent=s==="idle"?"0:00":fmtT(timerElapsed());
+  pb.style.display=s==="idle"?"none":"inline";
+  pb.textContent=s==="run"?"Mettre en pause":"Reprendre";
+  document.title=s==="idle"?"Peloton — CRPE 2027":fmtT(timerElapsed())+(s==="pause"?" · pause":"")+" · Peloton CRPE";
+}
+function stopTick(){if(tick){clearInterval(tick);tick=null}}
+
+/* THE TIMER IS DEVICE-SPECIFIC — it NEVER goes into the journal. A timer
+   started on the Mac has no reason to run on the iPhone. That confusion is
+   what forced the previous version to refuse any update "while a timer is
+   running", at the risk of leaving a device silently out of date. Only the
+   FINISHED session becomes a fact. */
+function setTimer(startedAt,accumulated){
+  Peloton.setLocal("timerStart",startedAt);
+  Peloton.setLocal("timerAcc",accumulated);
+  updateTimerUI();
+}
+function toggleTimer(){
+  if(timerState()==="idle"){
+    setTimer(Date.now(),0);
+    if(!tick)tick=setInterval(updateTimerUI,1000);
+    return;
+  }
+  const min=Math.round(timerElapsed()/60);
+  setTimer(null,0);
+  stopTick();
+  if(min<5){toast("Moins de 5 minutes — session non comptée.");return}
+  if(min>480){
+    toast("Chrono oublié ? Corrige la durée réelle.");
+    openSheet({manual:true,forgot:true,min});
+    return;
+  }
+  openSheet({min,date:todayStr(),manual:false});
+}
+function pauseTimer(){
+  if(timerState()==="run"){
+    setTimer(null,(state.timerAcc||0)+(Date.now()-state.timerStart));
+    stopTick();
+  }else if(timerState()==="pause"){
+    setTimer(Date.now(),state.timerAcc||0);
+    if(!tick)tick=setInterval(updateTimerUI,1000);
+  }
+}
+
+/* ================= SHEET ================= */
+let sheetCtx=null;
+function openSheet(ctx){
+  sheetCtx=ctx;
+  $("manualFields").style.display=ctx.manual?"block":"none";
+  if(ctx.manual){$("mMin").value="";
+    if(ctx.forgot){
+      $("sheetTitle").textContent="Chrono oublié ?";
+      $("sheetSub").textContent="Le chrono affichait "+fmtH(ctx.min)+". Saisis la durée réellement travaillée (5–480 min).";
+    }else{
+      $("sheetTitle").textContent="Session oubliée — aujourd'hui";
+      $("sheetSub").textContent="Une session ne peut être déclarée que le jour même. Marquée « déclarée » (°) — une heure vaut une heure, chronométrée ou non.";
+    }
+  }else{
+    $("sheetTitle").textContent="Session terminée — "+fmtH(ctx.min);
+    $("sheetSub").textContent="Deux taps : matière, type. C'est tout.";
+  }
+  buildChips("matChips",MATS,"fr");
+  buildChips("typeChips",TYPES,"exercices");
+  buildChapSel("fr");
+  $("sheetBg").classList.add("open");
+}
+function buildChips(id,arr,def){
+  const el=$(id);el.innerHTML="";
+  for(const [v,l] of arr){
+    const b=document.createElement("button");
+    b.className="chip"+(v===def?" sel":"");b.textContent=l;b.dataset.v=v;
+    b.addEventListener("click",()=>{
+      el.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel"));
+      b.classList.add("sel");
+      if(id==="matChips")buildChapSel(v);
+    });
+    el.appendChild(b);
+  }
+}
+/* The chapter picked in the sheet. A plain variable rather than the value of a
+   form control, because the control is now a grid of buttons. */
+let chapPick=null;
+function buildChapSel(mat){
+  const el=$("chapGrid");el.innerHTML="";chapPick=null;
+  const t=todayStr();
+  const pfx=mat==="fr"?"f":(mat==="ma"?"m":(mat==="e2"?"e":"o"));
+  function tile(id,name,cls,st){
+    const b=document.createElement("button");
+    b.type="button";b.className="chapchip"+cls;b.dataset.v=id;
+    b.innerHTML='<span class="dot"></span><span class="nm">'+name+"</span>"
+      +(st?'<span class="st">'+st+"</span>":"");
+    b.addEventListener("click",()=>{
+      el.querySelectorAll(".chapchip").forEach(c=>c.classList.remove("sel"));
+      b.classList.add("sel");chapPick=id||null;
+    });
+    el.appendChild(b);
+  }
+  tile("","Aucun"," sel","");
+  for(const c of CHAPS){
+    if(c.id[0]!==pfx)continue;
+    const o=state.chaps[c.id],st=o?o.s:0;
+    let cls=st===2?" s2":(st===1?" s1":""),lab=st===2?"consolidé":(st===1?"traité":"");
+    if(st>0&&chapEroded(c.id,t)){cls+=" ero";lab="s'effrite";}
+    tile(c.id,c.n,cls,lab);
+  }
+}
+function closeSheet(){$("sheetBg").classList.remove("open");sheetCtx=null}
+async function saveSheet(){
+  if(!sheetCtx)return;
+  let date=sheetCtx.date,min=sheetCtx.min;
+  if(sheetCtx.manual){
+    /* Today, and nothing else. A declaration made the day after is a memory of
+       a decision, not the decision — and the whole app rests on the difference.
+       Backdating was the one gesture that could rebuild a week of chain, a
+       month of volume and a kept appointment on an evening of regret, hours
+       after the day it claims had already ended without them. */
+    date=todayStr();min=parseInt($("mMin").value,10);
+    if(!min||min<5||min>480){toast("Durée requise (5–480 min).");return}
+  }
+  const mat=document.querySelector("#matChips .chip.sel").dataset.v;
+  const type=document.querySelector("#typeChips .chip.sel").dataset.v;
+  /* state BEFORE, for the causal feedback */
+  const t0=todayStr();
+  const rankBefore=userRank(t0),skBefore=streakDays().n;
+  const chapId=chapPick||null;
+  let chapName=null,touchedId=null;
+  if(chapId){
+    const c=CHAPS.find(x=>x.id===chapId);
+    chapName=c?c.n:null;
+    touchedId=chapId;
+  }else if(mat!=="oral"){
+    // no chapter given: we keep alive the oldest chapter of that subject
+    const pfx=mat==="fr"?"f":(mat==="ma"?"m":"e");
+    let oldest=null,oldestT=null;
+    for(const c of CHAPS){
+      if(c.id[0]!==pfx)continue;
+      const o=state.chaps[c.id];
+      if(!o||!o.s)continue;
+      const lt=chapLastTouch(c.id,date)||"0000";
+      if(oldest===null||lt<oldestT){oldest=c.id;oldestT=lt}
+    }
+    touchedId=oldest;
+  }
+  const wasEroded=touchedId?chapEroded(touchedId,date):false;
+  const manual=!!sheetCtx.manual;
+  closeSheet();
+
+  /* A single round trip for the two facts this gesture produces: the session,
+     and the upkeep of the chapter it makes you work on. */
+  const facts=[{kind:"sessionLogged",
+                data:{id:uid("s"),date,min,mat,type,chap:chapName,manual,
+                      loggedOn:t0,at:nowHM()}}];
+  if(touchedId)facts.push({kind:"chapterTouched",data:{id:touchedId,date}});
+  await Peloton.recordMany(facts);
+
+  /* immediate causal feedback: `state` already reflects the session */
+  const parts=["Session "+fmtH(min)];
+  if(wasEroded&&touchedId){
+    const cn=CHAPS.find(x=>x.id===touchedId).n;
+    parts.push("« "+(cn.length>26?cn.slice(0,25)+"…":cn)+" » réparé");
+  }
+  const rankAfter=userRank(t0);
+  if(rankAfter<rankBefore)parts.push("tu passes <b>"+ordFr(rankAfter)+"</b>");
+  const sk=streakDays();
+  if(sk.n>skBefore&&sk.n>=2)parts.push("série : "+sk.n+" j");
+  const wp=weekPrescription();
+  parts.push(wp.remain>0?"reste "+fmtH(wp.remain)+" cette semaine":"objectif hebdo tenu");
+  const ms=await checkMilestones(true); // silent: the milestone joins this toast
+  if(ms.length)parts.push(ms.length===1?"jalon : "+ms[0]:ms.length+" jalons");
+  toast(parts.join(" · "));
+}
+
+/* ================= EXPORT / IMPORT / RESET ================= */
+/* ================= MILESTONES ================= */
+async function checkMilestones(silent){
+  const t=todayStr();
+  const tot=state.sessions.reduce((a,x)=>a+x.min,0);
+  const m=userMetrics(t);
+  let nC=0;for(const c of CHAPS){if(!c.oral&&state.chaps[c.id]&&state.chaps[c.id].s===2)nC++}
+  const bestAnn=state.annales.reduce((mx,a)=>Math.max(mx,annScore(a)||0),0);
+  const sk=streakDays().n;
+  /* The ladder used to end at 300 h, which suited eight hours a week. At six
+     hours a day the whole of it fell before day 50 and then nothing came for
+     six months — the interval between rewards growing exactly as the fatigue
+     does. It now runs to 1250 h, and days worked sit alongside hours so that
+     the count you cannot inflate by sitting longer has its own rungs. */
+  const defs=[
+    ["h25","25 h de travail cumulées",tot>=1500],
+    ["h50","50 h cumulées",tot>=3000],
+    ["h100","100 h cumulées — le cap des sérieux",tot>=6000],
+    ["h250","250 h cumulées",tot>=15000],
+    ["h500","500 h cumulées",tot>=30000],
+    ["h750","750 h cumulées",tot>=45000],
+    ["h1000","1000 h cumulées",tot>=60000],
+    ["h1250","1250 h cumulées",tot>=75000],
+    ["j30","30 jours travaillés",m.activeTotal>=30],
+    ["j60","60 jours travaillés",m.activeTotal>=60],
+    ["j100","100 jours travaillés",m.activeTotal>=100],
+    ["j150","150 jours travaillés",m.activeTotal>=150],
+    ["prog50","50 % du programme couvert",m.covCredit>=ECRIT_UNITS*0.5],
+    ["prog90","90 % du programme couvert",m.covCredit>=ECRIT_UNITS*0.9],
+    ["consol10","10 chapitres consolidés",nC>=10],
+    ["ann12","Première annale ≥ 12/20",bestAnn>=12],
+    ["streak7","7 jours de série",sk>=7],
+    ["streak14","14 jours de série",sk>=14],
+    ["streak30","30 jours de série",sk>=30]
+  ];
+  const news=[],facts=[];
+  for(const [id,label,ok] of defs){
+    if(ok&&!state.milestones[id]){
+      facts.push({kind:"milestoneReached",data:{id,label,date:t}});
+      news.push(label);
+    }
+  }
+  if(facts.length){
+    await Peloton.recordMany(facts);
+    if(!silent)toast(news.length===1?"Jalon : "+news[0]+".":news.length+" jalons franchis — onglet Plus.");
+  }
+  return news;
+}
+function renderMilestones(){
+  const got=Object.entries(state.milestones||{}).sort((a,b)=>b[1].date<a[1].date?-1:1);
+  $("milestones").innerHTML=got.length?got.map(([id,x])=>
+    '<div class="trend-row"><span class="dot" style="background:var(--ok)"></span>'
+    +'<span class="lb">'+x.label+'</span>'
+    +'<span class="vv" style="color:var(--dim);font-weight:400;font-size:12px">'+fmtDate(x.date)+"</span></div>").join("")
+    :'<div style="color:var(--dim);font-size:13px">Aucun jalon encore. Le premier t\'attend à 25 h cumulées.</div>';
+}
+
+/* ================= NOTIFICATION PLAN (native wrapper) =================
+   Consumed by the macOS/iOS app through the JS→Swift bridge: upcoming rival
+   feed + projected overtakes (honest assumption: app closed = no session). */
+function buildNotifPlan(horizon){
+  horizon=horizon||10;
+  const t=todayStr(),plan=[];
+  // i=0: the CURRENT day is included. Without it, the day's sessions showed
+  // up in the feed without ever notifying (and a seed initialised in the
+  // morning stayed mute until the next day). Swift already discards anything
+  // `date <= Date()`, so only the hours still ahead get scheduled.
+  for(let i=0;i<=horizon;i++){
+    const d=addDays(t,i);
+    if(d>=state.exam)break;
+    const picks=[];
+    for(const k of RKEYS){
+      const days=rivalDays(k);
+      const idx=clamp(daysBetween(state.start,d),0,days.length-1);
+      // today (i=0): a session already gone by would be rejected by Swift
+      // anyway — dropping it here frees its slot for a rival whose session
+      // is still ahead (picks is capped at 2)
+      if(days[idx]&&days[idx].sess&&!(i===0&&sessDue(days[idx],t)))picks.push({k,day:days[idx]});
+    }
+    picks.sort((a,b)=>"MIT".indexOf(a.k)-"MIT".indexOf(b.k));
+    picks.slice(0,2).forEach(p=>{
+      // same time as in the feed: no seam between the two
+      const hh=p.day.sess.h!=null?p.day.sess.h:18,mm=p.day.sess.m!=null?p.day.sess.m:0;
+      plan.push({at:d+"T"+pad(hh)+":"+pad(mm),
+        title:RIVALS[p.k].name+" — "+fmtH(p.day.min),
+        body:p.day.sess.chap+" ("+TYPE_LABEL[p.day.sess.type]+")"});
+    });
+  }
+  /* YOUR OWN APPOINTMENTS.
+     Until now every reminder this app sent was about somebody else — "Magalie,
+     4 h 25". These are the only ones that quote you back to yourself, and they
+     are the reason the appointment is worth taking at all: a promise nobody
+     reminds you of is a thought you had yesterday.
+
+     The follow-up is deliberately gentle and asks for LESS. Ninety minutes
+     after an appointment you have not started, the useful message is not that
+     you failed, it is that twenty minutes still counts — which is true, and
+     which is what actually gets someone sitting down. */
+  for(let i=0;i<=horizon;i++){
+    const d=addDays(t,i);
+    if(d>=state.exam)break;
+    const r=state.rdv[d];
+    if(!r||r.min===0)continue;
+    /* Nothing is said about an appointment already honoured. Starting at 6:30
+       for a 14:00 slot is perfectly fine — only the day counts — and being
+       reminded at 14:00 of something finished eight hours earlier is the kind
+       of notification that gets an app muted.
+       The follow-up is measured against the same bar as everything else. It
+       used to test the 20-minute streak floor, so someone who had done 25 of a
+       promised 120 got no nudge at all: the one person it was written for. */
+    const need=rdvBar(r.min),done=dayCredit(d);
+    if(done>=need)continue;
+    plan.push({at:d+"T"+pad(r.h)+":00",
+      title:"Tu as dit "+r.h+":00",
+      body:fmtH(r.min)+" — c'est l'heure."});
+    const late=r.h*60+90;
+    if(late<24*60)plan.push({at:d+"T"+pad(Math.floor(late/60))+":"+pad(late%60),
+      title:"Tu avais dit "+r.h+":00",
+      body:done>0?"Encore "+fmtH(need-done)+" et c'est tenu."
+                 :"Vingt minutes, ça compte. Le reste attend."});
+  }
+  // end of horizon: one last explicit alert rather than an ambiguous silence
+  const endD=addDays(t,Math.min(horizon,Math.max(1,daysBetween(t,state.exam)-1)));
+  if(endD<state.exam)plan.push({at:endD+"T20:00",
+    title:"Le peloton continue sans toi",
+    body:"Plus d'alertes programmées au-delà d'aujourd'hui. Ouvre l'app : elle reprogramme tout."});
+  plan.sort((a,b)=>a.at<b.at?-1:1);
+  return plan.slice(0,60);
+}
+/* ================= WIDGET PLAN (native wrapper) =================
+   The lock-screen widget cannot run this file: a widget extension is another
+   process, and it has no WebView. So the HTML does not hand it data to
+   interpret — it hands it a series of ALREADY-DECIDED readings, one per local
+   midnight, and the widget only paints them.
+
+   Seven days of them, because both readings are predictable that far: the
+   countdown by arithmetic, and the minutes under the honest assumption the
+   notification plan already makes — app closed means no session logged. So a
+   week can go by without the app running and the widget is still telling the
+   truth. The moment you log something, `pushPlanToNative` runs again and the
+   day's entry is rewritten. */
+function dailyTarget(){return clamp((state&&state.dailyTarget)||60,5,480)}
+function refTotal(){return clamp((state&&state.refTotal)||1000,50,3000)}
+function buildWidgetPlan(days){
+  days=days||7;
+  const t=todayStr(),plan=[],tgt=dailyTarget();
+  for(let i=0;i<days;i++){
+    const d=addDays(t,i);
+    plan.push({
+      at:d+"T00:00",
+      // today: what you have really done. Days ahead: nothing yet, which is
+      // what it will say if the app never opens again.
+      min:i===0?dayCredit(t):0,
+      target:tgt,
+      examDays:Math.max(0,daysBetween(d,state.exam))
+    });
+    if(d>=state.exam)break;
+  }
+  return plan;
+}
+/* Native bridge: on every change we send a fresh plan that REPLACES all the
+   pending reminders. No effect in a browser. */
+function pushPlanToNative(){
+  if(!state.started)return;
+  Peloton.scheduleNotifications(buildNotifPlan(10));
+  Peloton.publishWidget(buildWidgetPlan(7));
+}
+
+/* ================= RESET =================
+   It erases nothing: it RECORDS the fact "everything before this is
+   cancelled". That fact travels like any other, so the other device resets
+   itself at its next synchronisation.
+
+   This is what definitively fixes the old "resetting brings the data back"
+   defect: there is no longer a file to delete at the right moment nor a
+   write buffer to flush — only one more fact, and a fact is never
+   forgotten. */
+async function doReset(){
+  if(!confirm("Tout effacer, sur TOUS tes appareils ? Ton historique, le peloton, tout."))return;
+  if(!confirm("Sûr ? Tout repart de zéro."))return;
+  await Peloton.reset();
+  W.__sessionInit=false;
+  renderAll();
+  showFreshOnboarding();
+}
+
+/* ================= BOOT ================= */
+function showIntro(html,btnLabel,cb){
+  $("onbText").innerHTML=html;
+  $("onbGo").textContent=btnLabel;
+  $("onb").classList.add("open");
+  $("onbGo").onclick=()=>{$("onb").classList.remove("open");cb()};
+}
+function showFreshOnboarding(){
+  showIntro(
+    "Un concours n'est pas un duel. C'est un classement. Voici le tien.<br><br>"+
+    RKEYS.map(k=>"<b style='color:var("+RIVALS[k].cvar+")'>"+RIVALS[k].name+"</b> — "+RIVALS[k].intro).join("<br>")+"<br><br>"+
+    "73 postes. Écrits en avril 2027. Tout le monde part de zéro aujourd'hui.<br><br>"+
+    "Tout est mesuré en heures, contre un conseillé de "+refTotal()+" h sur toute la préparation — le haut de ce que recommandent les organismes. Ce n'est pas une barre d'admission : personne n'a mesuré ce que font les reçus. C'est un étalon, et il ne bouge pas.",
+    "Commencer — jour 1",
+    async ()=>{
+      /* The birth of the peloton is a fact like any other. If both devices
+         created one each on their own side, the journal order would name the
+         same winner everywhere, with no question asked — whereas the previous
+         version asked the user to settle it. */
+      await Peloton.recordMany([
+        {kind:"pelotonStarted",data:{start:todayStr(),exam:"2027-04-06",
+                                     seed:(Math.floor(Math.random()*2**31))>>>0}},
+        {kind:"onboardingFinished",data:{}}
+      ]);
+      // the opening session is triggered by onStateChanged()
+    });
+}
+/* ╔═════════════════════════════════════════════════════════════════════════╗
+   ║  STARTUP                                                                ║
+   ╚═════════════════════════════════════════════════════════════════════════╝
+
+   The order matters, and it is simple:
+
+   1. wire up the interface;
+   2. show the local copy — instant, offline, no network;
+   3. go and read the shared folder, without blocking the screen.
+
+   The app is usable from step 2 onwards. That is the reversal compared with
+   the previous version, which had no local copy at all and stayed stuck on
+   "Connecting to the folder…" until iCloud had answered. */
+
+async function boot(){
+  wireInterface();
+
+  // 2. this device's own memory: nothing to wait for from anyone
+  await Peloton.loadFromNative();
+  W.__booted=true;
+  applyTheme();
+  renderAll();
+  renderSyncUI();
+
+  // 3. the shared folder
+  if(Native.isNative&&Peloton.status.hasFolder&&!state.started){
+    /* Nothing locally, but a folder is configured: it may hold everything. We
+       wait for its answer before concluding anything — NEVER a welcome screen
+       on top of existing data. */
+    showGate("Lecture du dossier de synchronisation…","Patiente…",()=>{});
+    await Peloton.pull();
+  }else{
+    Peloton.pull();          // in the background: the screen is already usable
+  }
+
+  await openSession();
+  watchClock();
+  if(timerState()==="run"&&!tick)tick=setInterval(updateTimerUI,1000);
+  updateTimerUI();
+}
+
+/* What happens once per opening, once the peloton is known. */
+async function openSession(){
+  if(!state.started){
+    // The peloton is gone (a reset, here or on the other device): a timer
+    // still running would have nothing left to measure.
+    if(timerState()!=="idle"){setTimer(null,0);stopTick()}
+    W.__sessionInit=false;
+    if(Native.isNative&&!Peloton.status.hasFolder){
+      showGate(
+        "Choisis un dossier partagé — par exemple <b>iCloud Drive → CRPE-Sync</b>."
+        +"<br><br>C'est lui qui portera ton peloton d'un appareil à l'autre. "
+        +"Tes données seront de toute façon sauvegardées sur cet appareil.",
+        "Choisir le dossier…",()=>Peloton.chooseFolder());
+      return;
+    }
+    if(Native.isNative&&Peloton.status.problem){
+      /* Folder configured but unreadable, and nothing locally: the data may
+         well be in there. We NEVER start over on top of it. */
+      showGate("⚠ Le dossier de synchronisation n'a pas pu être lu.<br><br><i>"
+        +Peloton.status.problem+"</i><br><br>Tes données s'y trouvent peut-être : "
+        +"on ne recommence pas à zéro par-dessus.",
+        "Réessayer",async()=>{await Peloton.pull();await openSession()});
+      return;
+    }
+    showFreshOnboarding();
+    return;
+  }
+
+  hideGate();
+  if(W.__sessionInit)return;
+  W.__sessionInit=true;
+  await maybeAdjust();
+  await checkMilestones(true);
+  maybeDebrief();
+  pushPlanToNative();
+  // last of all: the "here is what happened while you were away" summary has
+  // already been shown by the previous render, so the date can move forward.
+  Peloton.setLocal("lastOpen",todayStr());
+}
+
+/* Time passing changes the display even when the user touches nothing at all:
+   the day rolls over, a rival's session comes due at its hour. A due session
+   changes THREE things at once (the feed, the rivals' odds, the weekly total)
+   — hence renderAll() and not renderFeed(). */
+function watchClock(){
+  W.__lastDay=todayStr();
+  W.__lastDue=dueTodayCount();
+  setInterval(()=>{
+    if(W.__lastDay!==todayStr()){
+      W.__lastDay=todayStr();W.__lastDue=0;invalidateRivals();renderAll();return;
+    }
+    const due=dueTodayCount();
+    if(due!==W.__lastDue){W.__lastDue=due;renderAll()}
+  },60000);
+}
+
+/* Every listener, in one place, wired up exactly once. */
+function wireInterface(){
+  $("themeBtn").addEventListener("click",()=>setTheme(state.theme==="dark"?"light":"dark"));
+  $("thLight").addEventListener("click",()=>setTheme("light"));
+  $("thDark").addEventListener("click",()=>setTheme("dark"));
+  document.querySelectorAll("nav.tabs button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.remove("act"));
+      document.querySelectorAll(".page").forEach(x=>x.classList.remove("act"));
+      b.classList.add("act");
+      $("pg-"+b.dataset.pg).classList.add("act");
+    });
+  });
+
+  $("timerBtn").addEventListener("click",toggleTimer);
+  $("pauseBtn").addEventListener("click",pauseTimer);
+  $("manualAdd").addEventListener("click",()=>openSheet({manual:true}));
+  $("sheetCancel").addEventListener("click",closeSheet);
+  $("sheetSave").addEventListener("click",saveSheet);
+  $("moreFeed").addEventListener("click",()=>{feedShown+=25;renderFeed()});
+  $("progList").addEventListener("click",onProgClick);
+
+  $("feed").addEventListener("click",e=>{
+    const b=e.target.closest("[data-del]");
+    if(b)delSession(b.getAttribute("data-del"));
+  });
+  $("annList").addEventListener("click",e=>{
+    const b=e.target.closest("[data-dela]");
+    if(b)delAnnale(b.getAttribute("data-dela"));
+  });
+
+  $("annForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    /* The date is not chosen, it is the paper being sat. Nothing here can
+       reach another day. */
+    const cur=todayAnnale();
+    if(!cur){toast("La saisie n'est ouverte que les jours d'annale.");return}
+    const v={};
+    for(const [k,id] of [["e1","annE1"],["e2","annE2"],["o1","annO1"],["o2","annO2"]]){
+      const raw=$(id).value;
+      if(raw==="")  {v[k]=null;continue}
+      const n=parseFloat(raw);
+      if(isNaN(n)||n<0||n>20){toast("Note invalide : chaque épreuve se note sur 20.");return}
+      v[k]=n;
+    }
+    if(v.e1==null&&v.e2==null&&v.o1==null&&v.o2==null){toast("Saisis au moins une note.");return}
+    await Peloton.record("annaleLogged",Object.assign({id:uid("a"),date:cur.date},v));
+    const ms=await checkMilestones(true); // silent: merged into THIS toast
+    toast("Annale enregistrée — courbe recalée."+(ms.length?" Jalon : "+ms[0]+".":""));
+  });
+
+  $("examDate").addEventListener("change",()=>{
+    const v=$("examDate").value;
+    if(!v||v<=state.start){renderSettings();return}
+    resetScales();invalidateRivals();
+    Peloton.record("settingChanged",{key:"exam",value:v});
+  });
+  $("dailyTargetInp").addEventListener("change",()=>{
+    const v=parseInt($("dailyTargetInp").value,10);
+    if(isNaN(v)||v<5||v>480){toast("Entre 5 et 480 minutes.");renderSettings();return}
+    Peloton.record("settingChanged",{key:"dailyTarget",value:v});
+  });
+  $("refTotalInp").addEventListener("change",()=>{
+    const v=parseFloat($("refTotalInp").value);
+    if(isNaN(v)||v<50||v>3000){toast("Entre 50 et 3000 h au total.");renderSettings();return}
+    resetScales();invalidateRivals();
+    Peloton.record("settingChanged",{key:"refTotal",value:v});
+    toast("Conseillé mis à jour — tout est recalculé.");
+  });
+  $("resetBtn").addEventListener("click",doReset);
+  $("chooseSyncBtn").addEventListener("click",()=>Peloton.chooseFolder());
+  $("syncNowBtn").addEventListener("click",async()=>{
+    await Peloton.pull();
+    toast(Peloton.status.problem?"Sync impossible — "+Peloton.status.problem
+                                :"Synchronisation terminée — tu es à jour.");
+  });
+
+  if(!Native.isNative){
+    $("notifExpl").textContent="Version navigateur : aucune notification. Une page web locale fermée ne peut pas te prévenir — les rappels du peloton n'existent que dans l'app native (Mac + iPhone).";
+  }
+}
+
+/* Test hook: lets the model be driven from outside (Safari console,
+   verification scripts) without going through the interface. */
+W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWeekly,
+  chapCredit,currentRateW,maybeAdjust,
+  buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
+  annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
+  annScore,annFull,todayAnnale,buildWidgetPlan,dailyTarget,dayCredit,
+  restLegit,restLeft,dayHolds,rdvKept,rdvBar,rdvTarget,
+  weeklyTarget,checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
+  standingProj,rivalProj,
+  weekPrescription,userRank,weekNarrative,
+  project,emptyState,LEGACY,
+  get state(){return state},set state(s){state=s},
+  clearCaches(){invalidateRivals();resetScales()}};
+
+if(typeof document!=="undefined")boot().catch(e=>{
+  /* Last safety net: even a failed startup must explain itself, rather than
+     leave a blank, silent screen. */
+  console.error("Peloton — startup:",e);
+  W.__booted=true;
+  Peloton.failure="Le démarrage a échoué ("+((e&&e.message)||e)+").";
+  try{renderSyncBanner()}catch(_){}
+});
+</script>
+</body>
+</html>

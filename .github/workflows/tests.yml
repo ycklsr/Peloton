@@ -1,0 +1,28 @@
+# Replays both check suites on every publish.
+#
+# They require neither Xcode nor macOS: they load the <script> of the real
+# HTML file into Node. A Linux machine is enough, and the result comes back
+# in under a minute.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Synchronization — convergence, idempotence, no loss
+        run: node Tests/projection.test.mjs Peloton/Peloton/duel-crpe-2027.html
+
+      - name: Notifications — the contract with Swift
+        run: node Tests/notifications.test.mjs Peloton/Peloton/duel-crpe-2027.html
