@@ -15,7 +15,7 @@ import Foundation
 /// ## What the folder holds
 ///
 /// - `peloton-<device>.json`           : one device's log (one per device)
-/// - `peloton-backup-<device>-<date>.json` : safety net, 7 rolling days
+/// - `peloton-backup-<device>-<date>.json` : safety net, 2 rolling days
 /// - `peloton-sync.json`               : the old format, read once then ignored
 nonisolated struct SyncFolder: Sendable {
 
@@ -48,7 +48,13 @@ nonisolated struct SyncFolder: Sendable {
 
     private let bookmarkKey = "peloton.sync.folderBookmark"
     private let backupDayKey = "peloton.sync.lastBackupDay"
-    private let backupsKept = 7
+    /// Two dated copies per device — roughly 48 hours of cover.
+    ///
+    /// It used to be seven. The number is a window on a human slip, not on a
+    /// synchronisation failure: sync loses nothing by construction, whereas
+    /// "I deleted everything" needs to be noticed before the good copy is
+    /// pruned. Two days is the window this app is given to notice.
+    private let backupsKept = 2
 
     /// File name for THIS device. It is built on the identifier, not on the
     /// readable name: renaming your Mac therefore does not change file.
@@ -140,7 +146,7 @@ nonisolated struct SyncFolder: Sendable {
         }
     }
 
-    /// A dated copy of our own file, once a day, 7 days kept.
+    /// A dated copy of our own file, once a day, 2 days kept.
     ///
     /// This insures against the human slip ("I deleted everything"), not
     /// against a synchronisation failure — that one loses nothing by
