@@ -108,7 +108,15 @@ struct PelotonProvider: TimelineProvider {
                 .containerURL(forSecurityApplicationGroupIdentifier: Self.appGroup)?
                 .appending(path: Self.fileName) else { return [] }
         do {
-            return try JSONDecoder().decode([Reading].self, from: Data(contentsOf: url))
+            let plan = try JSONDecoder().decode([Reading].self, from: Data(contentsOf: url))
+            /* Say what was read, not only what failed. A tile showing stale
+               minutes beside a file already holding the right ones is
+               indistinguishable, from the outside, from a tile that never ran
+               — and only one of those is a bug in this file. */
+            os_log("readPlan: %d readings, first %{public}@ = %d min",
+                   log: OSLog(subsystem: "fr.yannick.crpe2027.Peloton", category: "widget"),
+                   type: .info, plan.count, plan.first?.at ?? "—", plan.first?.min ?? -1)
+            return plan
         } catch {
             os_log("readPlan failed: %{public}@",
                    log: OSLog(subsystem: "fr.yannick.crpe2027.Peloton", category: "widget"),

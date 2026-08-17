@@ -1,5 +1,6 @@
 import Foundation
 import WidgetKit
+import os
 
 /// Hands the widget its readings — and never learns what they mean.
 ///
@@ -27,6 +28,19 @@ enum WidgetSnapshot {
 #endif
     static let fileName = "widget-plan.json"
 
+    /// The widget's `kind`, repeated here because the two targets cannot see
+    /// each other's source. It MUST match PelotonWidget.kind exactly — naming
+    /// the kind is what makes the reload land: reloadAllTimelines() is the
+    /// documented call and it is the one that was silently doing nothing on
+    /// macOS, leaving the desktop tile on a timeline computed hours earlier
+    /// while the file beside it was already correct.
+#if os(macOS)
+    static let widgetKind = "PelotonWidget.v2"
+#else
+    static let widgetKind = "PelotonWidget"
+#endif
+    private static let log = OSLog(subsystem: "fr.yannick.crpe2027.Peloton", category: "widget")
+
     static var url: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
@@ -43,7 +57,18 @@ enum WidgetSnapshot {
         // Atomic write: a widget waking up in the middle of a partial one would
         // read a truncated file and fall back to its placeholder — which looks
         // exactly like "you have done nothing today".
-        guard (try? data.write(to: url, options: .atomic)) != nil else { return }
+        guard (try? data.write(to: url, options: .atomic)) != nil else {
+            os_log("publish: write FAILED at %{public}@", log: log, type: .error, url.path)
+            return
+        }
+        /* Both, in this order. reloadAllTimelines is the general call; naming
+           the kind is the one that actually reaches a desktop tile. And a line
+           in the log either way — diagnosing this took an afternoon precisely
+           because the successful path said nothing, so there was no way to
+           tell "the app never published" from "the widget never listened". */
+        WidgetCenter.shared.reloadTimelines(ofKind: widgetKind)
         WidgetCenter.shared.reloadAllTimelines()
+        os_log("publish: %d bytes, reload asked for kind %{public}@",
+               log: log, type: .info, data.count, widgetKind)
     }
 }
