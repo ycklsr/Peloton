@@ -518,6 +518,11 @@ nav.tabs button.act{color:var(--you)}
         <div class="d" id="refTotalImp" style="margin-top:6px"></div>
       </div>
       <div class="set-row">
+        <div class="t">Heure de clôture de la journée</div>
+        <div class="d">Passé cette heure, la carte du rendez-vous cesse de parler d'aujourd'hui et passe à demain — et la décision du jour, repos compris, n'est plus modifiable. Choisis l'heure à laquelle tu arrêtes de travailler : trop tôt, tu perds des soirées ; trop tard, annuler un repos ne te laisse plus le temps de faire les 20 minutes qui valident la journée.</div>
+        <input type="number" id="rdvDeadlineInp" min="12" max="23" step="1" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">h</span>
+      </div>
+      <div class="set-row">
         <div class="t">Date des écrits</div>
         <div class="d">Prévisionnel : fin mars – début avril 2027. Ajuste quand l'arrêté officiel tombe (devenirenseignant.gouv.fr).</div>
         <input type="date" id="examDate" style="max-width:200px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)">
@@ -835,7 +840,7 @@ const THOMAS_NOTES=[
 
 /* The settings that travel. For those, and those alone, "the last gesture
    wins" — which is exactly what one expects from a setting. */
-const SYNCED_SETTINGS = new Set(["exam", "theme", "dailyTarget", "refTotal"]);
+const SYNCED_SETTINGS = new Set(["exam", "theme", "dailyTarget", "refTotal", "rdvDeadline"]);
 
 function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)}
 
@@ -865,6 +870,11 @@ function emptyState(){
        is none to cite. A documented convention, not a measurement, and
        settable for exactly that reason. */
     refTotal:1000,
+    /* The hour the day closes. Past it the card stops asking about today and
+       asks about tomorrow, and today's decision — including a rest — can no
+       longer be revised. Settable because the right hour is the one you stop
+       working at, which is nobody else's business. */
+    rdvDeadline:22,
     // spliced back in from local preferences — see withLocalPreferences()
     lastOpen:todayStr(), timerStart:null, timerAcc:0
   };
@@ -2393,17 +2403,26 @@ function renderAnnCount(){
      · changing your mind, at any hour, costs nothing.
    A commitment device that makes committing expensive stops being used, and
    then there is nothing left to keep. */
+/* The day closes at ten in the evening. One hour, named once.
+   There used to be two — a card that dropped today at 20 h and an appointment
+   that survived until 22 h — and neither described anything but the moment the
+   thinking stopped. A single deadline says what it does: past it, today is
+   over and tomorrow is the only thing left to decide. Before it, the card
+   stays on today for as long as something can still be done about today.
+   Ten in the evening is only the default: the right hour is the one you stop
+   working at, so it is a setting. */
+function rdvDeadline(){return clamp((state&&state.rdvDeadline)||22,12,23)}
 function rdvTarget(){
-  // Before eight in the evening with the day still open, the appointment that
-  // matters is today's. Otherwise it is tomorrow's — which is when you are in
-  // a position to decide it calmly.
-  const t=todayStr(),h=(new Date()).getHours(),r=state.rdv[t];
-  /* An appointment taken today stays on screen until it is kept — the twenty
-     minutes that validate a day are not the same thing as the half-promise
-     that honours an appointment, and dropping the card at the first threshold
-     hid the second one entirely. */
-  if(r&&r.min>0&&rdvKept(t)!==true&&h<22)return t;
-  return (!streakDays().todayDone&&h<20)?t:addDays(t,1);
+  const t=todayStr(),h=(new Date()).getHours();
+  if(h>=rdvDeadline())return addDays(t,1);
+  const r=state.rdv[t];
+  /* A decision stands on screen until it is honoured — including a rest.
+     A rest used to vanish the instant it was taken, because the condition
+     tested `min>0` and a rest is `min:0`: the card jumped to tomorrow and the
+     decision became unreachable within the second. A commitment you cannot
+     revise is a trap, not a commitment. */
+  if(r)return rdvKept(t)===true?addDays(t,1):t;
+  return streakDays().todayDone?addDays(t,1):t;
 }
 function rdvKept(date){
   const r=state.rdv[date];
@@ -2464,19 +2483,28 @@ function renderRdv(){
   drawRdvPicker(d,when);
 }
 function drawRdvPicker(d,when){
-  const el=$("rdvBody");
+  const el=$("rdvBody"),cur=state.rdv[d];
   const hours=[6,8,10,14,17,20];
   const tgt=dailyTarget();
   const mins=[...new Set([30,60,120,240,tgt])].sort((a,b)=>a-b);
   const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
     +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
-  el.innerHTML='<div class="rdv-top"><span class="st">Rien de prévu '+when+"</span></div>"
+  /* Reopened on a day that already has a choice, the picker used to head
+     itself "Rien de prévu" and offer the rest again as though it were free.
+     It says where you stand instead, and marks what is taken. */
+  const head=!cur?"Rien de prévu "+when
+    :(cur.min===0?"Repos prévu "+when:when.charAt(0).toUpperCase()+when.slice(1)+" à "+cur.h+":00 · "+fmtH(cur.min));
+  el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span></div>"
     +row("À quelle heure ?",hours,v=>v+":00",rdvPickH,"h")
     +row("Combien de temps ?",mins,v=>fmtH(v),rdvPickM,"m")
-    +(restLeft(d)
-        ?'<button class="rdv-off" id="rdvOff">'+(when==="demain"?"Demain":"Aujourd'hui")
-          +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
-        :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
+    +(cur&&cur.min===0
+        ?'<div class="rdv-off" style="text-decoration:none;cursor:default">'
+          +'<span class="chipd up">✓ Repos de la semaine</span> '
+          +'<span style="color:var(--faint)">choisis une heure pour revenir dessus</span></div>'
+        :restLeft(d)
+          ?'<button class="rdv-off" id="rdvOff">'+(when==="demain"?"Demain":"Aujourd'hui")
+            +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
+          :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
   el.querySelectorAll("[data-h]").forEach(b=>b.addEventListener("click",()=>{
     rdvPickH=+b.dataset.h;maybeSaveRdv(d,when)}));
   el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{
@@ -2893,6 +2921,7 @@ function renderSettings(){
   $("examDate").value=state.exam;
   $("dailyTargetInp").value=dailyTarget();
   $("refTotalInp").value=refTotal();
+  $("rdvDeadlineInp").value=rdvDeadline();
   /* The title carries the current value: change it to 1 200 and it reads
      "Rythme 1 200 h conseillé". A number frozen into a label goes stale the
      first time the setting moves. */
@@ -3595,6 +3624,11 @@ function wireInterface(){
     if(isNaN(v)||v<5||v>480){toast("Entre 5 et 480 minutes.");renderSettings();return}
     Peloton.record("settingChanged",{key:"dailyTarget",value:v});
   });
+  $("rdvDeadlineInp").addEventListener("change",()=>{
+    const v=parseInt($("rdvDeadlineInp").value,10);
+    if(isNaN(v)||v<12||v>23){toast("Entre 12 h et 23 h.");renderSettings();return}
+    Peloton.record("settingChanged",{key:"rdvDeadline",value:v});
+  });
   $("refTotalInp").addEventListener("change",()=>{
     const v=parseFloat($("refTotalInp").value);
     if(isNaN(v)||v<50||v>3000){toast("Entre 50 et 3000 h au total.");renderSettings();return}
@@ -3622,7 +3656,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,dailyTarget,dayCredit,
-  restLegit,restLeft,dayHolds,rdvKept,rdvBar,rdvTarget,
+  restLegit,restLeft,dayHolds,rdvKept,rdvBar,rdvTarget,rdvDeadline,
   weeklyTarget,checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
