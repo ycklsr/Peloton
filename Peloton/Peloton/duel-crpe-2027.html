@@ -538,10 +538,6 @@ nav.tabs button.act{color:var(--you)}
         <div class="d" id="notifExpl">Automatiques, rien à régler : le plan des 10 prochains jours — les séances du peloton, les dépassements qui se préparent — est reprogrammé à chaque action et à chaque ouverture de l'app. Il suffit d'avoir accepté les notifications au premier lancement (sinon : Réglages système → Notifications → Peloton).</div>
       </div>
       <div class="set-row">
-        <div class="t">Comment le conseillé est établi</div>
-        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. Il est réparti à plat : le même nombre d'heures chaque semaine, du premier jour aux écrits. Une référence qui monte et descend selon un profil que personne n'a mesuré cesse d'être une référence. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
-      </div>
-      <div class="set-row">
         <div class="t" style="color:#ff6b6b">Zone dangereuse</div>
         <div class="d">Tout effacer : ton historique, le leur, le peloton entier. Ils ne reviendront pas les mêmes.</div>
         <button class="sbtn danger" id="resetBtn">Réinitialiser</button>
@@ -2368,7 +2364,6 @@ function renderNames(){
   el("onbNames",RKEYS.map(k=>'<div><div class="avatar '+RIVALS[k].cls+'">'+RIVALS[k].name[0]
       +'</div><div class="nm">'+RIVALS[k].name+"</div></div>").join(""));
   el("legendStats",legendHTML());
-  el("rivalNames",rivalList());
 }
 
 function renderAll(){
