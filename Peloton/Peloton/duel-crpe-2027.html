@@ -1842,7 +1842,12 @@ function rivalDays(k){
       const chap=chapForUnit(unitIdx);
       const tr=r();const phase=cumWh>R.consolAt;
       let type;
-      if(phase)type=tr<0.42?"exercices":(tr<0.62?"annale":(tr<0.82?"fiches":"relecture"));
+      /* No annale outside the shared paper. The consolidation draw used to
+         hand one out on ordinary days — a private paper by another name, and
+         the whole point of a shared one is that it is the same paper, sat by
+         everyone, on the same morning. Its share goes back to the exercises
+         and the fiches. */
+      if(phase)type=tr<0.52?"exercices":(tr<0.80?"fiches":"relecture");
       else type=tr<0.45?"exercices":(tr<0.72?"cours":(tr<0.88?"fiches":"relecture"));
       /* The shared paper is not "at least four hours" any more, it is the real
          thing: eight hours of writing on day one, two hours forty of orals on
