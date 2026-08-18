@@ -1645,7 +1645,15 @@ function shapeMeanOf(k){
    and Nicolas swings ±5 % because a rival who skips two days in three is
    supposed to. Yours is fixed, so yours is whatever it is — the ratios are
    the design, not a guarantee about your particular peloton. */
-const RIVAL_CAL={M:1.077, I:1.281, T:0.572};
+const RIVAL_CAL={M:1.029, I:1.032, T:0.938};
+/* The largest share of a week a rival will give to the shared paper.
+   The paper is ten hours forty. For the ceiling rival that is a quarter of her
+   week and for the direct one a third; for the erratic one it would be more
+   than two thirds, which would make him a candidate who does nothing but sit
+   papers. He therefore sits the ones his week can absorb and skips the rest —
+   present on his good weeks, absent on his bad ones, which is exactly who he
+   is. Sitting a paper is all or nothing: never the writtens without the orals. */
+const ANN_MAX_SHARE={M:1, I:1, T:0.55};
 const RIVAL_DAY_CAP=300, CAL_TOTAL=598;
 /* Every scale keyed on (start, exam) or on the reference height, dropped
    together. They were three separate assignments at three call sites, which is
@@ -1709,47 +1717,126 @@ function prevShared(s){
   return p;
 }
 function annale1(){const l=sharedAnnales();return l.length?l[0]:null}
-function isAnnaleDay(k,s){
-  if(isShared(s)||isSharedDay2(s))return true;   // nobody sits a shared paper out
-  const d=s2d(s);
-  if(d.getDay()!==6)return false;
-  if(s<addDays(state.start,RIVALS[k].annStart))return false;
-  return d.getDate()<=7;
-}
+function isAnnaleDay(k,s){return isShared(s)||isSharedDay2(s)}
 function chapForUnit(u){
   const order=["f1","f2","f3","f5","f6","m1","m2","m4","f7","m6","m8","f4","m3","m5","f8","m7","e1","f9","e2","m9","e3","f10","e5"];
   const id=order[Math.min(u,order.length-1)];
   const c=CHAPS.find(x=>x.id===id);
   return c?c.n:"Révisions générales";
 }
+/* THE WEEK IS THE UNIT.
+   A rival's week is a budget — reference x ratio, with its week-to-week swing
+   and whatever an illness or a cyclone takes out of it — and the days inside
+   it merely share that budget out. It used to be the other way round: each day
+   was drawn on its own and the week was whatever they happened to add up to,
+   which drifted enormously. The direct rival was aimed at 31.7 h a week and
+   produced anything from 19.2 to 47.2; the erratic one, aimed at 15.1, ranged
+   from 1.3 to 31.6. The ratios held on the whole preparation and meant nothing
+   on any given week — so a standing in October said nothing either.
+   Days still vary as much as they ever did. The week no longer does. */
+function rivalWeekPlan(k,monday){
+  const R=RIVALS[k];
+  const rw=rng(state.seed,R.tag+"w"+isoWeek(monday));
+  const wMult=clamp(Math.exp((rw()*2-1)*R.amp),R.lo,R.hi);
+  const dates=[];for(let i=0;i<7;i++)dates.push(addDays(monday,i));
+
+  /* Availability first: an event empties the days it covers and shrinks the
+     budget by as much, rather than being crushed into the same total. */
+  const avail=dates.map(d=>dayMult(k,d));
+  const share=avail.reduce((a,b)=>a+b,0)/7;
+  let budget=Math.round(rivalWeekly(k,monday)*wMult*share*60);
+
+  /* The shared paper is taken off the top when it is sat: it is part of the
+     week's work, not an extra laid on it. */
+  const fixed={};
+  for(const d of dates){
+    const day1=isShared(d)?d:(isSharedDay2(d)?addDays(d,-1):null);
+    if(day1===null)continue;
+    const paper=ANNALE_MIN;
+    const sits=paper<=Math.round(rivalWeekly(k,monday)*wMult*share*60)*ANN_MAX_SHARE[k]
+               || ANN_MAX_SHARE[k]>=1;
+    if(sits&&avail[dates.indexOf(d)]>0)fixed[d]=sharedMinutes(d);
+  }
+  let left=budget;
+  for(const d in fixed)left-=fixed[d];
+
+  /* What is left is shared out by weight: the weekday profile, a daily draw,
+     and the days the rival simply takes off. */
+  const base=dates.map((d,i)=>{
+    if(fixed[d]!==undefined||avail[i]<=0)return 0;
+    const r=rng(state.seed,R.tag+"d"+d);
+    return R.wd[dow(d)]*(0.45+1.1*r())*avail[i];
+  });
+  let w=base.slice();
+  for(let i=0;i<7;i++){
+    if(w[i]<=0)continue;
+    const r=rng(state.seed,R.tag+"off"+dates[i]);
+    if(r()<R.skip[1]*0.55)w[i]=0;         // a day off, drawn per day
+  }
+  /* A day still has a ceiling. Without one the week's budget piles onto
+     whatever days survived the draw — two survivors once produced a Monday of
+     twenty-three hours, which is the sort of thing a generator does when you
+     take the unit of work from the day and give it to the week without
+     remembering that days are still days.
+     If the surviving days cannot hold the budget, the ones taken off are given
+     back, strongest weight first, until they can. */
+  const cap=Math.max(60,Math.round(RIVAL_DAY_CAP*refTotal()/CAL_TOTAL/5)*5);
+  const order=[...Array(7).keys()].filter(i=>base[i]>0).sort((a,b)=>base[b]-base[a]);
+  /* Restored until the surviving days can hold the week COMFORTABLY, not just
+     hold it. Stopping at bare capacity pinned three days of a forty-hour week
+     at the ceiling and printed them identical — which is the opposite of a
+     rhythm that varies from day to day. The slack is what leaves room for the
+     weights to say something. */
+  for(const i of order){
+    if(order.filter(j=>w[j]>0).length*cap>=left*1.35)break;
+    if(w[i]<=0)w[i]=base[i];
+  }
+  const out={};
+  for(const d in fixed)out[d]=fixed[d];
+  /* Water-filling: share out by weight, clamp anything over the ceiling, and
+     hand what was clamped back to the days with room left. */
+  let rest=Math.max(0,left);
+  const give=new Array(7).fill(0);
+  for(let pass=0;pass<6&&rest>0;pass++){
+    const open=[...Array(7).keys()].filter(i=>w[i]>0&&give[i]<cap);
+    const sum=open.reduce((a,i)=>a+w[i],0);
+    if(!open.length||sum<=0)break;
+    let placed=0;
+    for(const i of open){
+      const room=cap-give[i];
+      const m=Math.min(room,Math.round(rest*w[i]/sum/5)*5);
+      give[i]+=m;placed+=m;
+    }
+    if(placed<=0)break;
+    rest-=placed;
+  }
+  // the fullest day with room left absorbs the rounding, so the week lands exactly
+  if(rest!==0){
+    const i=[...Array(7).keys()].filter(j=>give[j]>0&&give[j]+rest<=cap&&give[j]+rest>=0)
+                                .sort((a,b)=>give[b]-give[a])[0];
+    if(i!==undefined)give[i]+=rest;
+  }
+  for(let i=0;i<7;i++)if(give[i]>0)out[dates[i]]=(out[dates[i]]||0)+give[i];
+  return out;
+}
 function rivalDays(k){
   if(_rdCache[k])return _rdCache[k];
   const R=RIVALS[k],days=[];
+  const plans=new Map();
+  const planFor=d=>{const m=mondayOf(d);
+    if(!plans.has(m))plans.set(m,rivalWeekPlan(k,m));
+    return plans.get(m)};
   let cumWh=0,cumMin=0,activeTotal=0;
   const end=addDays(state.exam,-1);
   let cur=state.start;
   const nD=daysBetween(state.start,end);
   for(let i=0;i<=nD;i++){
     const r=rng(state.seed,R.tag+"d"+cur);
-    const rw=rng(state.seed,R.tag+"w"+isoWeek(cur));
-    const wMult=clamp(Math.exp((rw()*2-1)*R.amp),R.lo,R.hi);
-    const weekly=rivalWeekly(k,cur)*wMult*dayMult(k,cur);
-    const dailyT=weekly*60*R.wd[dow(cur)]/7;
-    let min=0;
-    if(dailyT>8){
-      min=Math.round(dailyT*(0.6+0.8*r())/5)*5;
-      if(min<R.skip[0]&&r()<R.skip[1])min=0;
-      /* The daily cap has to move with the reference. Fixed at five hours it
-         silently broke the ratios the moment the bar was raised: at a 1 200 h
-         reference it clipped the ceiling rival on nearly every day and pulled
-         her from 1.50 down to 1.04. Scaled, the ratios hold from 10 to 40 h a
-         week. CAL_TOTAL is the reference RIVAL_CAL was measured against. */
-      min=Math.min(min,RIVAL_DAY_CAP*refTotal()/CAL_TOTAL);
-    }
+    let min=Math.max(0,Math.round(planFor(cur)[cur]||0));
     let sess=null;
-    /* The shared paper overrides everything — a rest day, a lazy draw, even a
-       cyclone. On that one date the whole peloton is in the room. */
-    const shared=isShared(cur)||isSharedDay2(cur);
+    // the paper is sat only if this rival's week made room for it
+    const shared=(isShared(cur)||isSharedDay2(cur))&&min>0
+                 &&min===sharedMinutes(cur);
     if(min>0||shared){
       const unitIdx=Math.min(ECRIT_UNITS-1,Math.floor(cumWh/R.unitH));
       const chap=chapForUnit(unitIdx);
@@ -1763,8 +1850,13 @@ function rivalDays(k){
          drawn — nobody sits half a paper — and it escapes the daily cap, which
          exists to keep ordinary days plausible and has no business trimming an
          examination. */
-      if(shared){type="annale";min=sharedMinutes(cur)}
-      else if(isAnnaleDay(k,cur)){type="annale";min=Math.max(min,240+Math.round(r()*30/5)*5)}
+      /* The rival's own monthly paper is gone. It raised the day above what
+         the week had budgeted — Math.max over the plan — and put up to four
+         hours a month back outside the rule the week is supposed to obey. With
+         a shared paper every seven days it was redundant anyway; rivals still
+         show annale sessions through the ordinary type draw, at no extra cost
+         to the week. */
+      if(shared)type="annale";
       cumWh+=min/60;cumMin+=min;activeTotal++;
       // session time (drawn AFTER min/type: past history is left untouched)
       // — except the shared paper, which starts at the same hour for everyone,
@@ -3675,7 +3767,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
-  restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,
+  rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
