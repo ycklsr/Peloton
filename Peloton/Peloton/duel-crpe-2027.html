@@ -817,9 +817,9 @@ const THOMAS_NOTES=[
    milestoneReached    {id, label, date}
    rendezVousPris      {date, h, min}          the appointment with yourself.
                        `min: 0` is a declared rest day — a decision, not an
-                       absence. The FIRST one for a date wins and nothing can
-                       displace it: a promise you can revise at will is not a
-                       promise, it is a preference.
+                       absence. Revisable until the first session of that day
+                       is logged, sealed afterwards: a promise you can revise
+                       once you are working against it is not a promise.
    debriefSeen         {week}
    settingChanged      {key, value}          see SYNCED_SETTINGS
 
@@ -947,11 +947,14 @@ function project(events){
         break;
 
       case "rendezVousPris":
-        /* FIRST one wins. A commitment is not revisable — that is what makes
-           it one. Enforcing it here rather than only in the interface means a
-           second fact cannot slip in from the other device, or from a race
-           between two taps, and quietly rewrite what was promised. */
-        if(st.rdv[d.date]===undefined)st.rdv[d.date]={h:d.h,min:d.min};
+        /* Revisable until the day's work begins, and sealed the moment it
+           does. The journal decides it by its own order: a promise recorded
+           after a session for that date arrives too late and is dropped — you
+           cannot lower a bar you have already started clearing. Deciding it
+           here rather than in the interface means a stale tab, or the other
+           device, cannot rewrite a promise you are already working against. */
+        if(st.rdv[d.date]===undefined
+           ||!st.sessions.some(x=>x.date===d.date))st.rdv[d.date]={h:d.h,min:d.min};
         break;
 
       case "debriefSeen":
@@ -2459,6 +2462,14 @@ function renderAnnCount(){
    Ten in the evening is only the default: the right hour is the one you stop
    working at, so it is a setting. */
 function rdvDeadline(){return clamp((state&&state.rdvDeadline)||22,12,23)}
+/* A promise can still be taken back while the day has not begun: nothing
+   logged, and no stopwatch running. The stopwatch is device-local and never
+   reaches the journal, so it is checked here and the journal checks the rest —
+   between them, no way to soften a promise you have started working against. */
+function rdvSealed(date){
+  if(dayCredit(date)>0)return true;
+  return date===todayStr()&&timerState()!=="idle";
+}
 function rdvTarget(){
   const t=todayStr(),h=(new Date()).getHours();
   if(h>=rdvDeadline())return addDays(t,1);
@@ -2522,10 +2533,15 @@ function renderRdv(){
         chip='<span style="color:var(--dim);font-size:12px">encore '+fmtH(left)+" pour tenir</span>";
       }
     }
-    /* No way back. Once the day is promised — work or rest — the card reports
-       it and nothing more: the picker is not offered again. */
+    /* Changeable while the day has not started; a statement of fact once it
+       has. The button does not linger as a lie. */
+    const sealed=rdvSealed(d);
     el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span>"+chip+"</div>"
-      +'<div class="rdv-off" style="text-decoration:none;cursor:default">C\'est pris pour '+when+".</div>";
+      +(sealed
+        ?'<div class="rdv-off" style="text-decoration:none;cursor:default">C\'est pris pour '+when+" — la journée a commencé.</div>"
+        :'<button class="rdv-off" id="rdvChange">Changer <span style="color:var(--faint)">— possible tant que tu n\'as pas commencé</span></button>');
+    if(!sealed)$("rdvChange").addEventListener("click",()=>{
+      rdvPickH=null;rdvPickM=null;drawRdvPicker(d,when)});
     return;
   }
   drawRdvPicker(d,when);
@@ -2536,13 +2552,21 @@ function drawRdvPicker(d,when){
   const mins=[60,120,240,360];
   const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
     +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
-  el.innerHTML='<div class="rdv-top"><span class="st">Rien de prévu '+when+"</span></div>"
+  const cur=state.rdv[d];
+  const head=!cur?"Rien de prévu "+when
+    :(cur.min===0?"Repos prévu "+when
+      :when.charAt(0).toUpperCase()+when.slice(1)+" à "+cur.h+":00 · "+fmtH(cur.min));
+  el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span></div>"
     +row("À quelle heure ?",hours,v=>v+":00",rdvPickH,"h")
     +row("Combien de temps ?",mins,v=>fmtH(v),rdvPickM,"m")
-    +(restLeft(d)
-        ?'<button class="rdv-off" id="rdvOff">'+(when==="demain"?"Demain":"Aujourd'hui")
-          +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
-        :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
+    +(cur&&cur.min===0
+        ?'<div class="rdv-off" style="text-decoration:none;cursor:default">'
+          +'<span class="chipd up">✓ Repos de la semaine</span> '
+          +'<span style="color:var(--faint)">choisis une heure pour revenir dessus</span></div>'
+        :restLeft(d)
+          ?'<button class="rdv-off" id="rdvOff">'+(when==="demain"?"Demain":"Aujourd'hui")
+            +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
+          :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
   el.querySelectorAll("[data-h]").forEach(b=>b.addEventListener("click",()=>{
     rdvPickH=+b.dataset.h;maybeSaveRdv(d,when)}));
   el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{
@@ -2550,14 +2574,14 @@ function drawRdvPicker(d,when){
   const off=$("rdvOff");
   if(off)off.addEventListener("click",async()=>{
     await Peloton.record("rendezVousPris",{date:d,h:0,min:0});
-    toast("Repos prévu "+when+". C'est définitif — et c'est le seul de la semaine.");
+    toast("Repos prévu "+when+". C'est le seul de la semaine.");
   });
 }
 async function maybeSaveRdv(d,when){
   if(rdvPickH===null||rdvPickM===null){drawRdvPicker(d,when);return}
   const h=rdvPickH,m=rdvPickM;rdvPickH=null;rdvPickM=null;
   await Peloton.record("rendezVousPris",{date:d,h,min:m});
-  toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+". C'est définitif.");
+  toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+". Modifiable tant que tu n'as pas commencé.");
 }
 
 function renderChain(){
@@ -3724,7 +3748,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
-  rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,
+  rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,rdvSealed,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
