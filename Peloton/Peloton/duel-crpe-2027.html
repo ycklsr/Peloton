@@ -947,12 +947,13 @@ function project(events){
         break;
 
       case "rendezVousPris":
-        /* Revisable until the day's work begins, and sealed the moment it
-           does. The journal decides it by its own order: a promise recorded
-           after a session for that date arrives too late and is dropped — you
-           cannot lower a bar you have already started clearing. Deciding it
-           here rather than in the interface means a stale tab, or the other
-           device, cannot rewrite a promise you are already working against. */
+        /* The hour that seals a promise is a question about now, and the
+           projection has no now: state is a pure function of the journal. The
+           page enforces the hour; the journal enforces what it can see without
+           a clock — a promise recorded after a session for that date arrives
+           too late and is dropped. Comparing the fact's timestamp to the named
+           hour would put two devices' clocks in charge of whether a promise
+           stands, which is a worse failure than the one it would close. */
         if(st.rdv[d.date]===undefined
            ||!st.sessions.some(x=>x.date===d.date))st.rdv[d.date]={h:d.h,min:d.min};
         break;
@@ -2462,13 +2463,26 @@ function renderAnnCount(){
    Ten in the evening is only the default: the right hour is the one you stop
    working at, so it is a setting. */
 function rdvDeadline(){return clamp((state&&state.rdvDeadline)||22,12,23)}
-/* A promise can still be taken back while the day has not begun: nothing
-   logged, and no stopwatch running. The stopwatch is device-local and never
-   reaches the journal, so it is checked here and the journal checks the rest —
-   between them, no way to soften a promise you have started working against. */
+/* A promise stands from the hour it named. Before that hour it can be revised
+   — the length, the time, or calling the day off — and after it, nothing.
+   The hour is the commitment: "14:00, two hours" is a decision about 14:00,
+   and it stops being revisable when 14:00 arrives, whether or not anything has
+   been done yet.
+   Working earlier seals it too, for the obvious reason: a promise you are
+   already clearing cannot be lowered to meet what you managed.
+   Tomorrow's promise is never sealed — tomorrow's hour has not come. */
 function rdvSealed(date){
   if(dayCredit(date)>0)return true;
-  return date===todayStr()&&timerState()!=="idle";
+  const t=todayStr();
+  if(date>t)return false;
+  if(date<t)return true;
+  const r=state.rdv[date];
+  if(!r)return false;
+  if(timerState()!=="idle")return true;
+  /* A rest names no hour — its `h` is 0, and reading that as "sealed from
+     midnight" would seal it the instant it was taken. It holds until the day
+     closes, which is the only hour a day without an appointment has. */
+  return (new Date()).getHours()>=(r.min===0?rdvDeadline():r.h);
 }
 function rdvTarget(){
   const t=todayStr(),h=(new Date()).getHours();
@@ -2538,8 +2552,9 @@ function renderRdv(){
     const sealed=rdvSealed(d);
     el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span>"+chip+"</div>"
       +(sealed
-        ?'<div class="rdv-off" style="text-decoration:none;cursor:default">C\'est pris pour '+when+" — la journée a commencé.</div>"
-        :'<button class="rdv-off" id="rdvChange">Changer <span style="color:var(--faint)">— possible tant que tu n\'as pas commencé</span></button>');
+        ?'<div class="rdv-off" style="text-decoration:none;cursor:default">C\'est pris pour '+when+" — l\'heure est passée.</div>"
+        :'<button class="rdv-off" id="rdvChange">Changer <span style="color:var(--faint)">— possible jusqu\'à '
+          +(r.min===0?"la fin de la journée":r.h+":00")+'</span></button>');
     if(!sealed)$("rdvChange").addEventListener("click",()=>{
       rdvPickH=null;rdvPickM=null;drawRdvPicker(d,when)});
     return;
@@ -2581,7 +2596,7 @@ async function maybeSaveRdv(d,when){
   if(rdvPickH===null||rdvPickM===null){drawRdvPicker(d,when);return}
   const h=rdvPickH,m=rdvPickM;rdvPickH=null;rdvPickM=null;
   await Peloton.record("rendezVousPris",{date:d,h,min:m});
-  toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+". Modifiable tant que tu n'as pas commencé.");
+  toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+". Modifiable jusqu'à "+h+":00.");
 }
 
 function renderChain(){
