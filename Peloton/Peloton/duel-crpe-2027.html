@@ -2724,6 +2724,7 @@ function buildFeed(){
         // and "17 h 55" beside "4 h 25" is two of the same shape meaning
         // entirely different things.
         hm:d.sess.h!=null?(d.sess.h+":"+pad(d.sess.m)):null,
+        tmin:d.sess.h!=null?d.sess.h*60+d.sess.m:-1,
         label:d.sess.chap+" — "+TYPE_LABEL[d.sess.type],
         week:weekMinsAt(days,d.date),
         note:rivalNoteFor(k,d.date,d.sess)});
@@ -2735,10 +2736,23 @@ function buildFeed(){
     items.push({date:s.date,who:"Y",cls:"y",name:"Toi",min:s.min,id:s.id,
       label:MAT_LABEL[s.mat]+" — "+TYPE_LABEL[s.type]+chap+(s.manual?" °":""),
       hm:st?(st.noted?"noté à "+st.hm:st.hm):null,
+      // the same clock time the line prints, as minutes, so the feed can be
+      // ordered by it rather than by who happens to own the line
+      tmin:st?(+st.hm.split(":")[0]*60+ +st.hm.split(":")[1]):-1,
       week:null,note:null});
   }
+  /* Newest first, by the clock — within a day as well as across days.
+     It used to fall back to a fixed order of people once the dates matched, so
+     a day read: all of yours in the order they were written, then Laura's,
+     then Magalie's, whatever time any of it happened. A feed whose second
+     level of sorting is "whose line is it" is not a feed, it is three lists
+     printed one after another. Lines with no recorded time sit at the end of
+     their day; the order of people only ever breaks a genuine tie. */
   const ord={Y:0,M:1,I:2,T:3};
-  items.sort((a,b)=>b.date<a.date?-1:(b.date>a.date?1:ord[a.who]-ord[b.who]));
+  items.sort((a,b)=>
+    a.date!==b.date?(a.date<b.date?1:-1)
+    :(a.tmin!==b.tmin?b.tmin-a.tmin
+    :ord[a.who]-ord[b.who]));
   return items;
 }
 function weekMinsAt(days,ref){
