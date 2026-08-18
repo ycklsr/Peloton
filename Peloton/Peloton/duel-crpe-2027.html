@@ -2468,12 +2468,12 @@ function rdvTarget(){
   const t=todayStr(),h=(new Date()).getHours();
   if(h>=rdvDeadline())return addDays(t,1);
   const r=state.rdv[t];
-  /* A decision stands on screen until it is honoured — including a rest.
-     A rest used to vanish the instant it was taken, because the condition
-     tested `min>0` and a rest is `min:0`: the card jumped to tomorrow and the
-     decision became unreachable within the second. A commitment you cannot
-     revise is a trap, not a commitment. */
-  if(r)return rdvKept(t)===true?addDays(t,1):t;
+  /* The card stays on today while today still has something to settle: a
+     promise of work not yet kept. A rest settles the day the moment it is
+     taken — nothing further can happen, and nothing can be revised either —
+     so it hands the card straight to tomorrow rather than holding it hostage
+     until the deadline for a decision nobody can change. */
+  if(r)return (r.min===0||rdvKept(t)===true)?addDays(t,1):t;
   return streakDays().todayDone?addDays(t,1):t;
 }
 function rdvKept(date){
