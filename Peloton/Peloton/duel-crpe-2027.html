@@ -539,7 +539,7 @@ nav.tabs button.act{color:var(--you)}
       </div>
       <div class="set-row">
         <div class="t">Comment le conseillé est établi</div>
-        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. La forme de la courbe (démarrage doux, poussée aux deux tiers, effort avant les écrits, décrue sur la dernière quinzaine) est une convention, remise à l'échelle du total que tu choisis. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. <b>Il n'y a plus de probabilité d'admission</b> : elle reposait sur des constantes choisies et non validées, elle démarrait au taux d'admission avant que tu aies travaillé une heure, et aucune explication ne pouvait la rendre lisible. Ce que tu vois maintenant, tu peux le vérifier contre ta propre montre. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
+        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. Il est réparti à plat : le même nombre d'heures chaque semaine, du premier jour aux écrits. Une référence qui monte et descend selon un profil que personne n'a mesuré cesse d'être une référence. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. <b>Il n'y a plus de probabilité d'admission</b> : elle reposait sur des constantes choisies et non validées, elle démarrait au taux d'admission avant que tu aies travaillé une heure, et aucune explication ne pouvait la rendre lisible. Ce que tu vois maintenant, tu peux le vérifier contre ta propre montre. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
       </div>
       <div class="set-row">
         <div class="t" style="color:#ff6b6b">Zone dangereuse</div>
@@ -1372,44 +1372,21 @@ function fmtLegibleDate(iso){
 }
 
 /* ================= TARGET (shared reference curve) ================= */
-/* The SHAPE of a preparation — gentle start, a push at two thirds, the big
-   effort before the writtens, a taper in the last fortnight. Its own weighted
-   mean depends on how long the preparation actually is — the opening fortnight
-   weighs more in a short one — so it is measured rather than assumed, and the
-   profile is then rescaled without being redrawn. */
-function targetShape(s){
-  const d=daysBetween(state.start,s);
-  const total=Math.max(daysBetween(state.start,state.exam),1);
-  const frac=d/total;
-  if(d<14)return 6;
-  if(frac<0.35)return 8.5;
-  if(frac<0.52)return 9.5;
-  if(frac<0.68)return 13;
-  if(frac<0.82)return 10;
-  if(frac<0.96)return 15;
-  return 8;
-}
-/* The reference, at the height set in the settings.
-   It used to be the shape alone — a fixed ~10.5 h/week — and that is where the
-   ceiling came from: it is the denominator of the volume score, so anyone
-   working much above it scored the same as anyone working far above it. At a
-   six-hour daily target you cross it on the third day of the week and the
-   model stops being able to tell your effort apart from anybody else's.
-   Scaled so the cumulative reference lands exactly on the total set in the
-   settings, whatever the length of the preparation — which is what lets the
-   tile print "conseillé 900 h" and be right. */
-let _shapeCache=null;
-function shapeMean(){
-  if(_shapeCache!==null)return _shapeCache;
-  const n=Math.max(daysBetween(state.start,state.exam),1);
-  let cum=0,cur=state.start;
-  for(let i=0;i<n;i++){cum+=targetShape(cur);cur=addDays(cur,1)}
-  _shapeCache=cum/n;
-  return _shapeCache;
-}
+/* THE REFERENCE, FLAT.
+   The advised total divided by the length of the preparation, and the same
+   figure every week of it.
+   It used to be a bell — 6, 8.5, 9.5, 13, 10, 15, 8 across the run: gentle
+   start, push at two thirds, everything before the writtens, a taper in the
+   last fortnight. That was a convention about how a preparation ought to be
+   paced, written here and measured by nobody, and it made the word
+   "conseillé" mean 17 h in August and 44 h in March. A yardstick that moves
+   is not one. Flattening it removes an assumption rather than adding one.
+   The peloton follows this same figure, so they flatten with it — the ratios
+   half / on / one-and-a-half hold week by week now, not only over the whole
+   preparation. */
 function targetWeekly(s){
   const n=Math.max(daysBetween(state.start,state.exam),1);
-  return targetShape(s)/shapeMean()*refTotal()*7/n;
+  return refTotal()*7/n;
 }
 let _tgtCache=null;
 function targetCum(s){
@@ -1653,7 +1630,9 @@ function shapeMeanOf(k){
    the skip rule then removes short days entirely. Neither is symmetric, and
    they differ per rival because amp and skip do. Solved numerically over twelve
    seeds, not guessed.
-   The weekly shared paper moved them a long way. Ten hours forty of compulsory
+   Re-solved when the reference was flattened: the bell used to hand them their
+   volume unevenly across the run, and evening it out moved every one of them.
+   The weekly shared paper moved them a long way too. Ten hours forty of compulsory
    examination is a large, IDENTICAL cost imposed on three candidates of very
    different volumes: it lifted the erratic one from 0.50 to 0.60 and pushed the
    other two down, because on his own he does less in two days than the paper
@@ -1666,14 +1645,14 @@ function shapeMeanOf(k){
    and Nicolas swings ±5 % because a rival who skips two days in three is
    supposed to. Yours is fixed, so yours is whatever it is — the ratios are
    the design, not a guarantee about your particular peloton. */
-const RIVAL_CAL={M:1.179, I:1.155, T:0.652};
+const RIVAL_CAL={M:1.077, I:1.281, T:0.572};
 const RIVAL_DAY_CAP=300, CAL_TOTAL=598;
 /* Every scale keyed on (start, exam) or on the reference height, dropped
    together. They were three separate assignments at three call sites, which is
    three chances to forget one — and forgetting one rescales the model without
    saying so. */
 function resetScales(){
-  _tgtCache=null;_shapeCache=null;
+  _tgtCache=null;
   for(const k in _shapeMeans)delete _shapeMeans[k];
 }
 function rivalWeekly(k,s){
@@ -2080,19 +2059,21 @@ function monthWorked(){
    thirty-four weeks, and the week you take a Sunday you are shown a debt for
    having rested. One day is planned out of the total; the chain does not
    care which one. */
-/* What the week asked for: the promises actually taken in it, and nothing
-   else. There used to be a daily target multiplied by six — a second number
-   for the thing the daily promise already says, and only one of the two ever
-   decided whether a day counted. The denominator therefore grows through the
-   week as commitments are made: on Monday evening two hours can be all of it. */
-function weekPromised(ref){
-  let d=mondayOf(ref);const end=addDays(d,6);let m=0;
-  while(d<=end){const r=state.rdv[d];if(r)m+=r.min;d=addDays(d,1)}
-  return m;
-}
+/* What a week of the advised total comes to, flat: the whole recommendation
+   divided by the length of the preparation. It is the figure the settings
+   already print under the field — "sur ta préparation, cela fait 27 h 16 par
+   semaine en moyenne" — and the bar now measures against it.
+   The promises taken in the week were the obvious other candidate and they are
+   the wrong one: a week where nothing was promised would have shown a bar
+   against zero, and a Monday with two hours promised would have read 100 %.
+   A reference has to be there before the week starts to say anything about it.
+   Flat rather than the shaped targetWeekly, which climbs from about 17 h a
+   week to nearly 40 before the writtens: over a single week a moving reference
+   says less than a fixed one. */
+function weekReference(){return targetWeekly(todayStr())*60}
 function weekPrescription(){
   const t=todayStr();
-  const tgtMin=weekPromised(t);
+  const tgtMin=weekReference();
   const done=weekMinsUser(t);
   return {tgtMin,done,remain:Math.max(0,tgtMin-done)};
 }
@@ -2198,7 +2179,7 @@ function rivalProj(k){
 function renderTiles(){
   const t=todayStr();
   const uw=weekMinsUser(t);
-  const tgtMin=weekPromised(t);
+  const tgtMin=weekReference();
   /* The bar carries the verdict; there is no badge beside it any more.
      Two figures either side of a bar already say what the gap is — a chip
      repeating it read "▼ 1000 h" next to "conseillé 1000 h", the same number
@@ -2231,11 +2212,10 @@ function renderTiles(){
       share*100,barCol,"conseillé "+adv)
     +pelotonProjTile(p.refTot,adv)
     +tile("Heures travaillées cette semaine",fmtH(uw),
-      tgtMin>0?uw/tgtMin*100:0,
-      tgtMin>0&&wp.remain===0?"var(--ok)":"var(--grad-you)",
-      tgtMin===0?"rien promis cette semaine"
-        :(wp.remain>0?"reste "+fmtH(wp.remain)+" sur les "+fmtH(tgtMin)+" promises cette semaine"
-                     :"promesses de la semaine tenues — "+fmtH(tgtMin)))
+      uw/tgtMin*100,
+      wp.remain>0?"var(--grad-you)":"var(--ok)",
+      wp.remain>0?"reste "+fmtH(wp.remain)+" sur les "+fmtH(tgtMin)+" hebdomadaires du conseillé"
+                 :"semaine conseillée atteinte — "+fmtH(tgtMin))
     // Coverage and 7-day regularity used to sit here. Regularity is what the
     // chain says, better and over the whole preparation; coverage is the
     // Programme tab's whole subject, chapter by chapter.
@@ -3694,7 +3674,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   chapCredit,currentRateW,maybeAdjust,
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
-  annScore,annFull,todayAnnale,buildWidgetPlan,weekPromised,dayCredit,
+  annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
   restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
