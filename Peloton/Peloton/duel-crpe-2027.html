@@ -2579,7 +2579,7 @@ function renderRdv(){
 function drawRdvPicker(d,when){
   const el=$("rdvBody"),cur=state.rdv[d];
   const hours=[6,8,10,14,17,20];
-  const mins=[30,60,120,240,360];
+  const mins=[60,120,240,360];
   const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
     +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
   /* Reopened on a day that already has a choice, the picker used to head
@@ -2637,13 +2637,15 @@ function renderChain(){
       else if(m===0&&restLegit(d)){cls="rest";tip+=" — repos prévu";lit++}
       else if(m===0){cls="";tip+=" — rien"}
       else{
-        /* The shade is the share of THAT DAY'S promise, not of a fixed target:
-           a day is only ever measured against what was promised on it. A day
-           worked without a promise stays pale whatever it holds — it does not
-           count, and the colour should not pretend otherwise. */
-        const pr=state.rdv[d];
-        const r=pr&&pr.min>0?m/pr.min:0;
-        cls=r>=1.5?"l4":(r>=1?"l3":(r>=0.5?"l2":"l1"));
+        /* Absolute hours, not a share of anything: 2, 4, 6, 9.
+           A share made the same square mean different things on different days
+           — two hours against a two-hour promise looked exactly like nine
+           against nine — so the calendar could not be read across at a glance,
+           which is the only thing a calendar of squares is for. Below two
+           hours the day is lit at its palest: it happened, and that is all the
+           colour claims. Whether it COUNTS is the chain's business, not the
+           shade's. */
+        cls=m>=540?"l4":(m>=360?"l3":(m>=240?"l2":"l1"));
         tip+=" — "+fmtH(m);
         // Any green day counts here, including one below the streak floor: the
         // caption has to agree with what the grid shows, and the grid lights
