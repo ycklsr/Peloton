@@ -14,7 +14,7 @@ import os
 private struct Reading: Decodable {
     let at: String        // "2026-08-15T00:00", local time
     let min: Int          // minutes credited that day
-    let target: Int       // minutes aimed at that day
+    let target: Int       // minutes PROMISED for that day; 0 = nothing promised
     let examDays: Int     // days left until the written exams
 }
 
@@ -47,7 +47,7 @@ struct PelotonProvider: TimelineProvider {
     }()
 
     func placeholder(in context: Context) -> PelotonEntry {
-        PelotonEntry(date: .now, min: 0, target: 60, examDays: 0)
+        PelotonEntry(date: .now, min: 0, target: 0, examDays: 0)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PelotonEntry) -> Void) {
@@ -133,8 +133,13 @@ struct PelotonProvider: TimelineProvider {
 // is no colour to design with, so everything here reads in luminance alone.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Minutes done over minutes aimed at, inside the ring. Never above full: going
-/// past the target closes the ring, it does not overflow it.
+/// Minutes done over minutes promised, inside the ring. Never above full: going
+/// past the promise closes the ring, it does not overflow it.
+///
+/// A day with no promise has no denominator to show. It prints the minutes
+/// alone and leaves the ring empty — inventing a target would say the day was
+/// measured against something, and it was not: a day nobody promised anything
+/// for cannot count however long it is worked.
 struct PelotonRing: View {
     let entry: PelotonEntry
 
@@ -157,7 +162,7 @@ struct PelotonRing: View {
             // cannot differ between them — and it costs the type size that
             // makes the thing readable at a glance.
             VStack(spacing: -1) {
-                Text("\(entry.min)/\(entry.target)")
+                Text(entry.target > 0 ? "\(entry.min)/\(entry.target)" : "\(entry.min)")
                     .font(.system(size: 15, weight: .medium))
                 Text("min")
                     .font(.system(size: 9.5, weight: .regular))
@@ -220,7 +225,7 @@ struct PelotonDesktop: View {
                     .stroke(accent, style: StrokeStyle(lineWidth: 9, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: -1) {
-                    Text("\(entry.min)/\(entry.target)")
+                    Text(entry.target > 0 ? "\(entry.min)/\(entry.target)" : "\(entry.min)")
                         .font(.system(size: 22, weight: .medium))
                         .monospacedDigit()
                     Text("min")

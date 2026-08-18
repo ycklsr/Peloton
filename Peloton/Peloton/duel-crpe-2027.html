@@ -508,11 +508,6 @@ nav.tabs button.act{color:var(--you)}
         <button class="sbtn" id="thDark">Sombre</button>
       </div>
       <div class="set-row">
-        <div class="t">Objectif de travail quotidien</div>
-        <div class="d">Le nombre de minutes visé chaque jour. C'est ce que mesure l'anneau du widget sur l'écran verrouillé. Sans effet sur le modèle ni sur la chaîne : ce qui valide une journée, c'est l'engagement que tu prends le jour même, tenu en entier. Cette cible-ci sert de repère — l'anneau du widget, la couleur de la semaine, la durée proposée par défaut au rendez-vous.</div>
-        <input type="number" id="dailyTargetInp" min="5" max="480" step="5" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">min / jour</span>
-      </div>
-      <div class="set-row">
         <div class="t" id="refTotalTit">Rythme conseillé pour le CRPE</div>
         <div class="d">Le volume total auquel le modèle compare le tien — toi <b>et</b> le peloton. Par défaut 1 000 h, juste au-dessus de la fourchette sur laquelle les organismes de préparation convergent (600 à 900 h pour neuf à douze mois) — un nombre rond et un cran d'exigence en plus, choisi et non déduit. Aucune enquête publique ne mesure ce que font réellement les candidats ; c'est un conseil, pas une mesure — d'où ce réglage. C'est un total et non un rythme hebdomadaire, parce que c'est ainsi que les sources l'énoncent, et parce que le chiffre affiché sur la tuile vaut alors exactement ce nombre quelle que soit la longueur de ta préparation.</div>
         <input type="number" id="refTotalInp" min="50" max="3000" step="10" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">h au total</span>
@@ -839,7 +834,7 @@ const THOMAS_NOTES=[
 
 /* The settings that travel. For those, and those alone, "the last gesture
    wins" — which is exactly what one expects from a setting. */
-const SYNCED_SETTINGS = new Set(["exam", "theme", "dailyTarget", "refTotal", "rdvDeadline"]);
+const SYNCED_SETTINGS = new Set(["exam", "theme", "refTotal", "rdvDeadline"]);
 
 function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)}
 
@@ -852,10 +847,6 @@ function emptyState(){
     sessions:[], chaps:{}, annales:[], adj:[], milestones:{}, rdv:{},
     debriefSeen:null, onboarded:false,
     theme:"light",
-    /* Minutes aimed at each day. A target, not the streak floor: the floor
-       (STREAK_MIN) says whether a day counts at all, this says what you were
-       going for. The widget ring measures against it. */
-    dailyTarget:60,
     /* The whole preparation, in hours: what the model treats as a complete
        one. It is NOT your target — it is the yardstick everyone, yourself and
        the peloton alike, is measured against, and it is the denominator of the
@@ -2089,11 +2080,19 @@ function monthWorked(){
    thirty-four weeks, and the week you take a Sunday you are shown a debt for
    having rested. One day is planned out of the total; the chain does not
    care which one. */
-const WEEK_DAYS=6;
-function weeklyTarget(){return dailyTarget()*WEEK_DAYS}
+/* What the week asked for: the promises actually taken in it, and nothing
+   else. There used to be a daily target multiplied by six — a second number
+   for the thing the daily promise already says, and only one of the two ever
+   decided whether a day counted. The denominator therefore grows through the
+   week as commitments are made: on Monday evening two hours can be all of it. */
+function weekPromised(ref){
+  let d=mondayOf(ref);const end=addDays(d,6);let m=0;
+  while(d<=end){const r=state.rdv[d];if(r)m+=r.min;d=addDays(d,1)}
+  return m;
+}
 function weekPrescription(){
   const t=todayStr();
-  const tgtMin=weeklyTarget();
+  const tgtMin=weekPromised(t);
   const done=weekMinsUser(t);
   return {tgtMin,done,remain:Math.max(0,tgtMin-done)};
 }
@@ -2199,7 +2198,7 @@ function rivalProj(k){
 function renderTiles(){
   const t=todayStr();
   const uw=weekMinsUser(t);
-  const tgtMin=weeklyTarget();
+  const tgtMin=weekPromised(t);
   /* The bar carries the verdict; there is no badge beside it any more.
      Two figures either side of a bar already say what the gap is — a chip
      repeating it read "▼ 1000 h" next to "conseillé 1000 h", the same number
@@ -2231,10 +2230,12 @@ function renderTiles(){
     tile("Au rythme actuel, tu travailleras au total…",hrs(p.proj),
       share*100,barCol,"conseillé "+adv)
     +pelotonProjTile(p.refTot,adv)
-    +tile("Heures travaillées cette semaine",fmtH(uw),uw/tgtMin*100,
-      wp.remain>0?"var(--grad-you)":"var(--ok)",
-      wp.remain>0?"reste "+fmtH(wp.remain)+" pour atteindre l\'objectif personnel de "+fmtH(tgtMin)
-                 :"objectif personnel de "+fmtH(tgtMin)+" tenu")
+    +tile("Heures travaillées cette semaine",fmtH(uw),
+      tgtMin>0?uw/tgtMin*100:0,
+      tgtMin>0&&wp.remain===0?"var(--ok)":"var(--grad-you)",
+      tgtMin===0?"rien promis cette semaine"
+        :(wp.remain>0?"reste "+fmtH(wp.remain)+" sur les "+fmtH(tgtMin)+" promises cette semaine"
+                     :"promesses de la semaine tenues — "+fmtH(tgtMin)))
     // Coverage and 7-day regularity used to sit here. Regularity is what the
     // chain says, better and over the whole preparation; coverage is the
     // Programme tab's whole subject, chapter by chapter.
@@ -2501,8 +2502,7 @@ function renderRdv(){
 function drawRdvPicker(d,when){
   const el=$("rdvBody"),cur=state.rdv[d];
   const hours=[6,8,10,14,17,20];
-  const tgt=dailyTarget();
-  const mins=[...new Set([30,60,120,240,tgt])].sort((a,b)=>a-b);
+  const mins=[30,60,120,240,360];
   const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
     +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
   /* Reopened on a day that already has a choice, the picker used to head
@@ -2936,7 +2936,6 @@ function renderStats(){
 
 function renderSettings(){
   $("examDate").value=state.exam;
-  $("dailyTargetInp").value=dailyTarget();
   $("refTotalInp").value=refTotal();
   $("rdvDeadlineInp").value=rdvDeadline();
   /* The title carries the current value: change it to 1 200 and it reads
@@ -3430,11 +3429,10 @@ function buildNotifPlan(horizon){
    week can go by without the app running and the widget is still telling the
    truth. The moment you log something, `pushPlanToNative` runs again and the
    day's entry is rewritten. */
-function dailyTarget(){return clamp((state&&state.dailyTarget)||60,5,480)}
 function refTotal(){return clamp((state&&state.refTotal)||1000,50,3000)}
 function buildWidgetPlan(days){
   days=days||7;
-  const t=todayStr(),plan=[],tgt=dailyTarget();
+  const t=todayStr(),plan=[];
   for(let i=0;i<days;i++){
     const d=addDays(t,i);
     plan.push({
@@ -3442,7 +3440,9 @@ function buildWidgetPlan(days){
       // today: what you have really done. Days ahead: nothing yet, which is
       // what it will say if the app never opens again.
       min:i===0?dayCredit(t):0,
-      target:tgt,
+      // what was promised THAT day. Zero means nothing was promised, and the
+      // tile shows the minutes without a denominator rather than inventing one.
+      target:(state.rdv[d]||{min:0}).min,
       examDays:Math.max(0,daysBetween(d,state.exam))
     });
     if(d>=state.exam)break;
@@ -3663,11 +3663,6 @@ function wireInterface(){
     resetScales();invalidateRivals();
     Peloton.record("settingChanged",{key:"exam",value:v});
   });
-  $("dailyTargetInp").addEventListener("change",()=>{
-    const v=parseInt($("dailyTargetInp").value,10);
-    if(isNaN(v)||v<5||v>480){toast("Entre 5 et 480 minutes.");renderSettings();return}
-    Peloton.record("settingChanged",{key:"dailyTarget",value:v});
-  });
   $("rdvDeadlineInp").addEventListener("change",()=>{
     const v=parseInt($("rdvDeadlineInp").value,10);
     if(isNaN(v)||v<12||v>23){toast("Entre 12 h et 23 h.");renderSettings();return}
@@ -3699,9 +3694,9 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   chapCredit,currentRateW,maybeAdjust,
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
-  annScore,annFull,todayAnnale,buildWidgetPlan,dailyTarget,dayCredit,
+  annScore,annFull,todayAnnale,buildWidgetPlan,weekPromised,dayCredit,
   restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,
-  weeklyTarget,checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
+  checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
   project,emptyState,LEGACY,
