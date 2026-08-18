@@ -517,11 +517,6 @@ nav.tabs button.act{color:var(--you)}
         <div class="d" id="refTotalImp" style="margin-top:6px"></div>
       </div>
       <div class="set-row">
-        <div class="t">Heure de clôture de la journée</div>
-        <div class="d">Passé cette heure, la carte passe à demain : tu ne peux plus prendre d'engagement pour aujourd'hui — donc plus démarrer le chrono si tu n'en avais pas pris. Ce que tu avais déjà promis reste travaillable, la clôture ne t'arrête pas en pleine séance. Elle scelle en revanche un <b>repos</b> déclaré, qui reste annulable jusque-là ; un engagement de travail, lui, se scelle à l'heure qu'il a nommée et non à celle-ci. Choisis l'heure à laquelle tu arrêtes de travailler : trop tôt, tu perds les soirées où tu n'avais rien prévu ; trop tard, annuler un repos ne te laisse plus le temps de tenir en entier la promesse qui le remplace.</div>
-        <input type="number" id="rdvDeadlineInp" min="12" max="23" step="1" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">h</span>
-      </div>
-      <div class="set-row">
         <div class="t">Date des écrits</div>
         <div class="d">Prévisionnel : fin mars – début avril 2027. Ajuste quand l'arrêté officiel tombe (devenirenseignant.gouv.fr).</div>
         <input type="date" id="examDate" style="max-width:200px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)">
@@ -832,7 +827,7 @@ const THOMAS_NOTES=[
 
 /* The settings that travel. For those, and those alone, "the last gesture
    wins" — which is exactly what one expects from a setting. */
-const SYNCED_SETTINGS = new Set(["exam", "theme", "refTotal", "rdvDeadline"]);
+const SYNCED_SETTINGS = new Set(["exam", "theme", "refTotal"]);
 
 function uid(p){return p+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)}
 
@@ -857,13 +852,8 @@ function emptyState(){
        what candidates really do; there is none to cite. A documented
        convention, not a measurement, and settable for exactly that reason. */
     refTotal:900,
-    /* The hour the day closes. Past it the card stops asking about today and
-       asks about tomorrow, and today's decision — including a rest — can no
-       longer be revised. Settable because the right hour is the one you stop
-       working at, which is nobody else's business. */
-    rdvDeadline:22,
     // spliced back in from local preferences — see withLocalPreferences()
-    lastOpen:todayStr(), timerStart:null, timerAcc:0
+    lastOpen:todayStr(), timerStart:null, timerAcc:0, timerDay:null
   };
 }
 
@@ -1249,6 +1239,7 @@ function withLocalPreferences(st){
   const p=Peloton.local||{};
   st.timerStart=p.timerStart==null?null:p.timerStart;
   st.timerAcc=p.timerAcc||0;
+  st.timerDay=p.timerDay||null;
   st.lastOpen=p.lastOpen||st.start;
   return st;
 }
@@ -2457,15 +2448,10 @@ function renderAnnCount(){
      · changing your mind, at any hour, costs nothing.
    A commitment device that makes committing expensive stops being used, and
    then there is nothing left to keep. */
-/* The day closes at ten in the evening. One hour, named once.
-   There used to be two — a card that dropped today at 20 h and an appointment
-   that survived until 22 h — and neither described anything but the moment the
-   thinking stopped. A single deadline says what it does: past it, today is
-   over and tomorrow is the only thing left to decide. Before it, the card
-   stays on today for as long as something can still be done about today.
-   Ten in the evening is only the default: the right hour is the one you stop
-   working at, so it is a setting. */
-function rdvDeadline(){return clamp((state&&state.rdvDeadline)||22,12,23)}
+/* No hour closes the day but midnight. A day is over when the calendar says
+   so, and until then it is still today: still promisable, still workable,
+   still able to count. Any earlier hour was a judgment about when you ought to
+   stop, which is not the app's to make. */
 /* A promise stands from the hour it named. Before that hour it can be revised
    — the length, the time, or calling the day off — and after it, nothing.
    The hour is the commitment: "14:00, two hours" is a decision about 14:00,
@@ -2482,14 +2468,15 @@ function rdvSealed(date){
   const r=state.rdv[date];
   if(!r)return false;
   if(timerState()!=="idle")return true;
-  /* A rest names no hour — its `h` is 0, and reading that as "sealed from
-     midnight" would seal it the instant it was taken. It holds until the day
-     closes, which is the only hour a day without an appointment has. */
-  return (new Date()).getHours()>=(r.min===0?rdvDeadline():r.h);
+  /* A rest is sealed the moment it is taken, because taking it hands the card
+     to tomorrow: there is no longer any screen from which to reach it. Saying
+     it stayed revisable was true of the flag and false of the app.
+     A promise of work is sealed by the hour it named. */
+  if(r.min===0)return true;
+  return (new Date()).getHours()>=r.h;
 }
 function rdvTarget(){
-  const t=todayStr(),h=(new Date()).getHours();
-  if(h>=rdvDeadline())return addDays(t,1);
+  const t=todayStr();
   const r=state.rdv[t];
   /* The card stays on today while today still has something to settle: a
      promise of work not yet kept. A rest settles the day the moment it is
@@ -3008,7 +2995,6 @@ function renderStats(){
 function renderSettings(){
   $("examDate").value=state.exam;
   $("refTotalInp").value=refTotal();
-  $("rdvDeadlineInp").value=rdvDeadline();
   /* The title carries the current value: change it to 1 200 and it reads
      "Rythme 1 200 h conseillé". A number frozen into a label goes stale the
      first time the setting moves. */
@@ -3172,6 +3158,9 @@ function renderChronoHint(){
         : "Promis aujourd'hui : <b>"+fmtH(r.min)+"</b> à "+r.h+":00.<br>La journée compte quand tu y es, pas avant.");
 }
 function updateTimerUI(){
+  if(state.timerDay&&state.timerDay!==todayStr()&&timerState()!=="idle"){
+    closeTimerAtMidnight();return;
+  }
   const s=timerState(),btn=$("timerBtn"),pb=$("pauseBtn");
   btn.classList.toggle("on",s==="run");
   btn.classList.toggle("paused",s==="pause");
@@ -3186,14 +3175,44 @@ function updateTimerUI(){
 }
 function stopTick(){if(tick){clearInterval(tick);tick=null}}
 
+/* MIDNIGHT CUTS THE SESSION.
+   A stopwatch running across midnight belongs to the day it started on, and
+   only up to midnight: the minutes after it are a different day's, and a
+   session dated by the moment it was SAVED would hand a whole night's work to
+   a day that had not begun when it was done.
+   So it is closed where the day ends. What was done before midnight is
+   recorded against that day — even when it cannot validate it, which is the
+   usual case, since the promise was made for hours that have run out.
+   The subject and type are taken from the last session logged: nobody is
+   awake to be asked, and losing the time would be worse than guessing the
+   chapter. Checked on every tick and again at every launch, so a stopwatch left
+   running while the app was closed is still cut in the right place. */
+async function closeTimerAtMidnight(){
+  if(timerState()==="idle")return false;
+  const day=state.timerDay;
+  if(!day||day===todayStr())return false;
+  const midnight=s2d(addDays(day,1)).setHours(0,0,0,0);
+  const acc=(state.timerAcc||0)+(state.timerStart?Math.max(0,midnight-state.timerStart):0);
+  const min=Math.round(acc/60000);
+  setTimer(null,0,null);stopTick();
+  if(min<5){toast("Chrono du "+fmtDate(day)+" fermé à minuit — moins de 5 min, non compté.");return true}
+  const last=state.sessions.length?state.sessions[state.sessions.length-1]:null;
+  const mat=last?last.mat:"fr",type=last?last.type:"cours";
+  await Peloton.recordMany([{kind:"sessionLogged",
+    data:{id:uid("s"),date:day,min,mat,type,chap:null,manual:false,loggedOn:day,at:"00:00"}}]);
+  toast(fmtH(min)+" comptées sur le "+fmtDate(day)+" — le chrono a été coupé à minuit.");
+  return true;
+}
+
 /* THE TIMER IS DEVICE-SPECIFIC — it NEVER goes into the journal. A timer
    started on the Mac has no reason to run on the iPhone. That confusion is
    what forced the previous version to refuse any update "while a timer is
    running", at the risk of leaving a device silently out of date. Only the
    FINISHED session becomes a fact. */
-function setTimer(startedAt,accumulated){
+function setTimer(startedAt,accumulated,day){
   Peloton.setLocal("timerStart",startedAt);
   Peloton.setLocal("timerAcc",accumulated);
+  if(day!==undefined)Peloton.setLocal("timerDay",day);
   updateTimerUI();
 }
 function toggleTimer(){
@@ -3207,12 +3226,12 @@ function toggleTimer(){
       toast("Prends ton engagement du jour d'abord.",{label:"Y aller",fn:()=>W.goPage("duel")});
       return;
     }
-    setTimer(Date.now(),0);
+    setTimer(Date.now(),0,todayStr());
     if(!tick)tick=setInterval(updateTimerUI,1000);
     return;
   }
   const min=Math.round(timerElapsed()/60);
-  setTimer(null,0);
+  setTimer(null,0,null);
   stopTick();
   if(min<5){toast("Moins de 5 minutes — session non comptée.");return}
   if(min>480){
@@ -3734,11 +3753,6 @@ function wireInterface(){
     resetScales();invalidateRivals();
     Peloton.record("settingChanged",{key:"exam",value:v});
   });
-  $("rdvDeadlineInp").addEventListener("change",()=>{
-    const v=parseInt($("rdvDeadlineInp").value,10);
-    if(isNaN(v)||v<12||v>23){toast("Entre 12 h et 23 h.");renderSettings();return}
-    Peloton.record("settingChanged",{key:"rdvDeadline",value:v});
-  });
   $("refTotalInp").addEventListener("change",()=>{
     const v=parseFloat($("refTotalInp").value);
     if(isNaN(v)||v<50||v>3000){toast("Entre 50 et 3000 h au total.");renderSettings();return}
@@ -3766,7 +3780,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   buildNotifPlan,pushPlanToNative,streakDays,bestStreak,monthWorked,
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
-  rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvDeadline,rdvSealed,
+  rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvSealed,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
