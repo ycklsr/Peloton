@@ -509,7 +509,7 @@ nav.tabs button.act{color:var(--you)}
       </div>
       <div class="set-row">
         <div class="t" id="refTotalTit">Rythme conseillé pour le CRPE</div>
-        <div class="d">Le volume total auquel le modèle compare le tien — toi <b>et</b> le peloton. Par défaut 1 000 h, juste au-dessus de la fourchette sur laquelle les organismes de préparation convergent (600 à 900 h pour neuf à douze mois) — un nombre rond et un cran d'exigence en plus, choisi et non déduit. Aucune enquête publique ne mesure ce que font réellement les candidats ; c'est un conseil, pas une mesure — d'où ce réglage. C'est un total et non un rythme hebdomadaire, parce que c'est ainsi que les sources l'énoncent, et parce que le chiffre affiché sur la tuile vaut alors exactement ce nombre quelle que soit la longueur de ta préparation.</div>
+        <div class="d">Le volume total auquel le modèle compare le tien — toi <b>et</b> le peloton. Par défaut 900 h : le haut de la fourchette sur laquelle les organismes de préparation convergent, 600 à 900 h pour une préparation de neuf à douze mois. Aucune enquête publique ne mesure ce que font réellement les candidats ; c'est un conseil, pas une mesure — d'où ce réglage. C'est un total et non un rythme hebdomadaire, parce que c'est ainsi que les sources l'énoncent, et parce que le chiffre affiché sur la tuile vaut alors exactement ce nombre quelle que soit la longueur de ta préparation.</div>
         <input type="number" id="refTotalInp" min="50" max="3000" step="10" style="max-width:110px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt)"> <span style="font-size:13px;color:var(--dim)">h au total</span>
         <div class="d" id="refTotalImp" style="margin-top:6px"></div>
       </div>
@@ -539,7 +539,7 @@ nav.tabs button.act{color:var(--you)}
       </div>
       <div class="set-row">
         <div class="t">Comment le conseillé est établi</div>
-        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. Il est réparti à plat : le même nombre d'heures chaque semaine, du premier jour aux écrits. Une référence qui monte et descend selon un profil que personne n'a mesuré cesse d'être une référence. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. <b>Il n'y a plus de probabilité d'admission</b> : elle reposait sur des constantes choisies et non validées, elle démarrait au taux d'admission avant que tu aies travaillé une heure, et aucune explication ne pouvait la rendre lisible. Ce que tu vois maintenant, tu peux le vérifier contre ta propre montre. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
+        <div class="expl">Tout ce que cette app mesure est un <b>nombre d'heures</b>. Une heure en vaut une autre : les types de travail sont enregistrés et affichés, ils ne sont plus pondérés — un coefficient qui décide qu'une heure d'annale vaut 1,3 relecture est un jugement que personne n'a mesuré, et il mettait chaque chiffre à l'écran à un cran de ton chrono. Le <b>conseillé</b> réglé ci-dessus est le volume total d'une préparation complète ; il vient de ce que recommandent les organismes — 600 à 900 h pour neuf à douze mois — et non d'une enquête sur les reçus, parce qu'aucune n'existe. Il est réparti à plat : le même nombre d'heures chaque semaine, du premier jour aux écrits. Une référence qui monte et descend selon un profil que personne n'a mesuré cesse d'être une référence. Le peloton (<span id="rivalNames"></span>) est placé sur cette même échelle : la moitié du conseillé, le conseillé, une fois et demie. Leurs paramètres ne sont pas consultables. À trois semaines des écrits, l'app passe en mode dernière ligne droite : les piques cessent.</div>
       </div>
       <div class="set-row">
         <div class="t" style="color:#ff6b6b">Zone dangereuse</div>
@@ -854,12 +854,11 @@ function emptyState(){
        A TOTAL rather than a weekly rate, because that is how the sources state
        it and because it makes the figure on screen exact: the cumulative
        reference equals this number whatever the length of your preparation.
-       1 000 h sits just above the band the preparation providers converge on
-       (600–900 h) — a round number and a deliberate stretch, chosen rather
-       than derived. No public survey measures what candidates really do; there
-       is none to cite. A documented convention, not a measurement, and
-       settable for exactly that reason. */
-    refTotal:1000,
+       900 h is the top of the band the preparation providers converge on:
+       600 to 900 for a nine-to-twelve month run. No public survey measures
+       what candidates really do; there is none to cite. A documented
+       convention, not a measurement, and settable for exactly that reason. */
+    refTotal:900,
     /* The hour the day closes. Past it the card stops asking about today and
        asks about tomorrow, and today's decision — including a rest — can no
        longer be revised. Settable because the right hour is the one you stop
@@ -1398,26 +1397,6 @@ function targetCum(s){
   _tgtCache[s]=cum;return cum;
 }
 
-/* THE PROBABILITY MODEL USED TO LIVE HERE, and it is worth saying why it
-   does not any more.
-
-   It mapped three variables — volume, coverage, regularity — through a
-   sigmoid onto a percentage anchored on the published admission rate. Every
-   constant in it was chosen rather than fitted, because there is nothing to
-   fit against: no public data ties a volume of work to being taken. So it
-   produced a number that looked like a probability, could not act like one,
-   and could not be explained into meaning one either. It also started every
-   candidate at the admission rate on day one, which meant a fortnight of doing
-   nothing moved it by a single point — least informative exactly while the
-   habit is being formed.
-
-   What replaced it is hours, against an advised total. Nothing is inferred:
-   you can check every figure on screen against your own stopwatch.
-
-   Lost with it, deliberately: coverage and regularity no longer weigh on any
-   number. Erosion still shows in the Programme tab, and repairing a chapter is
-   still reported after a session — but neither costs or earns anything now.
-   That was the price of a page that can be read. */
 function expectedUnits(s){
   const d=daysBetween(state.start,s);
   const total=Math.max(daysBetween(state.start,state.exam),1);
@@ -1503,9 +1482,8 @@ function userMetrics(s){
   cov+=domCredits.slice(0,3).reduce((a,b)=>a+b,0);
   /* Past-paper marks used to bend the estimate here — the one measurement of
      your actual level anywhere in the model, worth up to a third of it. With
-     the probability gone there is nothing left for them to bend. They are
-     still recorded, still shown, still what the shared paper is for; they
-     simply no longer move a number. */
+     Marks are recorded and shown, and they are what the shared paper is for;
+     they move no number elsewhere. */
   return {wh, covCredit:cov, activeTotal:days.size, date:s};
 }
 
@@ -1876,12 +1854,6 @@ function rivalDays(k){
   }
   _rdCache[k]=days;return days;
 }
-/* rivalMetrics lived here. It assembled, for each rival, the same nine
-   figures userMetrics assembles for you — volume, coverage, the twenty-eight
-   day window, the longest gap, the past-paper factor — because the probability
-   needed all nine to compare two candidates. The comparison is hours now, and
-   hours are already in `cumWh`. */
-
 /* ================= HIDDEN ELASTICITY (the direct rival) =================
    A thermostat, and it only ever works in ONE direction: it eases the direct rival off
    when the gap has become discouraging. It never puts her back on the gas
@@ -1900,11 +1872,7 @@ function rivalDays(k){
 
    The window granted is exactly the re-evaluation interval, so two grants can
    never overlap and multiply into each other. */
-/* Read in hours now, like everything else. It used to compare the two of you
-   in S-space — the raw score behind the probability — which was the right
-   call while that space existed and is impossible now. A threshold nobody can
-   see, computed from a quantity nobody can see, would be the last piece of the
-   old model hiding in the machine.
+/* Read in hours, like everything else.
    0.55 of her cumulative hours: at half her pace the gap has stopped being a
    spur. Being behind is the normal state of this race and must stay
    uncomfortable — the thermostat is for the day it becomes a verdict. */
@@ -2174,11 +2142,7 @@ function weekPrescription(){
   const done=weekMinsUser(t);
   return {tgtMin,done,remain:Math.max(0,tgtMin-done)};
 }
-/* HOURS TO DATE — the one quantity the peloton is ranked on.
-   It used to be the probability, and the two disagreed: with 100 h against
-   Laura's 95 you ranked BELOW her, because her coverage and regularity scored
-   better in a model nobody could see. A standing that contradicts the only
-   figure on the page is worse than no standing. */
+/* HOURS TO DATE — the one quantity the peloton is ranked on. */
 function userHours(d){return userMetrics(d).wh}
 function rivalHours(k,d){
   const days=rivalDays(k),idx=clamp(daysBetween(state.start,d),0,days.length-1);
@@ -2239,14 +2203,8 @@ function renderSummary(){
 }
 
 /* ---- WHERE YOU STAND ----
-   The headline number used to be the probability, and it could not be read.
-   It starts at the published admission rate, so a fortnight of doing nothing
-   moves it 1.1 points; it is squeezed by `damp` early, so it says more about
-   the calendar than about you; and nothing calibrates it against real
-   admissions, so no explanation makes it mean what it looks like it means.
-   These two readings are in hours — the unit you actually control, against a
-   reference you set yourself. Both start at zero: doing nothing reads as
-   nothing, which is the whole point. */
+   Hours, against a reference you set yourself. It starts at zero: doing
+   nothing reads as nothing, which is the whole point. */
 const GAP_IN_DAYS_ABOVE=24;   // hours of debt past which hours stop conveying size
 
 function standingProj(){
@@ -2288,8 +2246,7 @@ function renderTiles(){
   }
   const wp=weekPrescription();
   /* Hours, rounded: minutes matter on a session and are noise on a season.
-     "901 h 26" of advice reads as false precision, and false precision is what
-     the probability was taken off the front of this page for. */
+     "901 h 26" of advice reads as false precision. */
   const hrs=h=>{h=Math.abs(h);
     if(h<1/60)return "0 h";
     return h>=10?Math.round(h)+" h":fmtH(h*60)};
@@ -2726,15 +2683,6 @@ function renderRanking(){
   $("ranking").innerHTML=html;
 }
 
-/* "Les courbes" used to be drawn here — your probability, the peloton's, and
-   the grey ghost, week by week. It went because the quantity it plotted could
-   not be read: anchored on the published admission rate, squeezed by `damp` at
-   the start, calibrated against nothing. The tiles say the same thing in hours,
-   in a unit that can be checked.
-   The probability itself survives where it still means something: the
-   standing, the weekly summary, the Stats page, the feedback after a session —
-   all comparisons between candidates who pass through the identical function,
-   which is its one honest use. */
 function weekMinsUser(ref){
   const from=mondayOf(ref);
   return state.sessions.filter(x=>x.date>=from&&x.date<=ref).reduce((a,x)=>a+x.min,0);
@@ -3508,7 +3456,7 @@ function buildNotifPlan(horizon){
    week can go by without the app running and the widget is still telling the
    truth. The moment you log something, `pushPlanToNative` runs again and the
    day's entry is rewritten. */
-function refTotal(){return clamp((state&&state.refTotal)||1000,50,3000)}
+function refTotal(){return clamp((state&&state.refTotal)||900,50,3000)}
 function buildWidgetPlan(days){
   days=days||7;
   const t=todayStr(),plan=[];
