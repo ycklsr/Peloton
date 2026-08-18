@@ -9,7 +9,7 @@
 :root{
   --bg:#eef0f4; --card:#ffffff; --card2:#f2f4f7; --line:#eef0f3; --card-bd:transparent;
   --txt:#101828; --dim:#667085; --faint:#98a2b3;
-  --you:#2563eb; --her:#ea580c; --ines:#7c3aed; --thomas:#ca8a04; --ghost:#94a3b8;
+  --you:#2563eb; --her:#ea580c; --ines:#7c3aed; --thomas:#ca8a04;
   --ok:#12b76a; --warn:#f79009; --bad:#f04438;
   /* the chain — GitHub's five steps, to the hex */
   --ch0:#ebedf0; --ch1:#9be9a8; --ch2:#40c463; --ch3:#30a14e; --ch4:#216e39;
@@ -33,7 +33,7 @@
 [data-theme="dark"]{
   --bg:#0e0f13; --card:#171922; --card2:#1e2130; --line:#2a2e40; --card-bd:#2a2e40;
   --txt:#e8eaf2; --dim:#8b90a5; --faint:#565b70;
-  --you:#4da3ff; --her:#fc5200; --ines:#c084fc; --thomas:#eab308; --ghost:#8b90a5;
+  --you:#4da3ff; --her:#fc5200; --ines:#c084fc; --thomas:#eab308;
   --ok:#3ecf8e; --warn:#ffb020; --bad:#ff6b6b;
   --ch0:#161b22; --ch1:#0e4429; --ch2:#006d32; --ch3:#26a641; --ch4:#39d353;
   --ch-edge:rgba(255,255,255,.05);
@@ -187,10 +187,8 @@ header.app{display:flex;align-items:center;justify-content:space-between;padding
 .entry .label{font-size:13.5px;margin-top:2px}
 .entry .meta{font-size:12px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
 /* The duration gets its own column, because it is the one thing the feed is
-   actually reporting. It used to sit in the grey meta line while the START
-   TIME sat up top in the same "4 h 25" shape — so the least useful number was
-   the loudest, and the two could not be told apart. Clock times now read 17:55
-   and live with the date; durations keep h/min and stand alone here. */
+   actually reporting. Clock times read 17:55 and live with the date;
+   durations keep h/min and stand alone here, so the two are never confused. */
 .entry .dur{flex:none;text-align:right;padding-left:8px;font-size:15px;font-weight:800;
   color:var(--txt);font-variant-numeric:tabular-nums;white-space:nowrap}
 .entry .dur .del{display:block;margin-left:auto;padding:5px 0 0}
@@ -228,14 +226,14 @@ header.app{display:flex;align-items:center;justify-content:space-between;padding
   background:var(--card2);color:var(--txt);font-size:15px;cursor:pointer;font-weight:700;
   font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;justify-content:center}
 .rdvchip.sel{background:var(--you);border-color:var(--you);color:#fff}
+.rdvchip.dis{color:var(--faint);border-style:dashed;cursor:default}
 .rdv-off{background:none;border:none;color:var(--dim);font-size:12.5px;cursor:pointer;
   min-height:44px;padding:14px 0 0;text-align:left;text-decoration:underline;text-underline-offset:3px}
 /* CHAPTER TILES.
-   This used to be a <select>: ten chapters with long names, collapsed into one
-   line showing "—". Choosing which chapter to keep alive is a decision that
-   needs the state of all of them at once — which are consolidated, which are
-   crumbling — and a dropdown hides exactly that until after you have opened
-   it. The colour IS the information; the tile is only its carrier. */
+   Choosing which chapter to keep alive is a decision that needs the state of
+   all of them at once — which are consolidated, which are crumbling — and a
+   dropdown would hide exactly that until after you had opened it. The colour
+   IS the information; the tile is only its carrier. */
 .chapgrid{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 14px;
   max-height:216px;overflow-y:auto;padding-right:2px}
 @media(min-width:560px){.chapgrid{grid-template-columns:1fr 1fr}}
@@ -660,13 +658,12 @@ function todayAnnale(){
   if(isSharedDay2(t))return {date:addDays(t,-1),day:2};
   return null;
 }
-/* Work used to be weighted by type — an hour of past paper counted 1.3, an
-   hour of re-reading 0.7. It is not any more: an hour is an hour. The weights
-   were a judgment about what learning is worth, made by nobody who has
-   measured it, and they put every figure on screen at one remove from the
-   stopwatch. "62 h pondérées" is a number you cannot check against your own
-   memory of the week; "62 h" is. The types are still recorded, and still
-   shown in the feed — they describe the session, they no longer price it. */
+/* An hour is an hour, whatever was done in it. The type is recorded and shown
+   in the feed: it describes a session, it does not price one. Anything else
+   would be a judgment about what learning is worth, made by nobody who has
+   measured it, and it would put every figure on screen at one remove from the
+   stopwatch. "62 h" is a number you can check against your own memory of the
+   week. */
 const TYPES=[["exercices","Exercices"],["cours","Cours / apprentissage"],["annale","Annale chronométrée"],["fiches","Fiches"],["relecture","Relecture"]];
 const MATS=[["fr","Français"],["ma","Maths"],["e2","Épreuve 2 (domaines)"],["oral","Oral"]];
 
@@ -1146,7 +1143,7 @@ const Peloton={
 
   /* The operations that query Swift. They never reject: a failure becomes a
      message on the screen, not an exception travelling up to break the
-     caller. At startup, an exception here used to leave the app frozen and
+     caller — at startup, one escaping here would leave the app frozen and
      mute. */
   pull(){return this.ask("pull","Lecture du dossier impossible")},
   reset(){return this.ask("reset","Remise à zéro impossible")},
@@ -1369,15 +1366,13 @@ function fmtLegibleDate(iso){
 /* THE REFERENCE, FLAT.
    The advised total divided by the length of the preparation, and the same
    figure every week of it.
-   It used to be a bell — 6, 8.5, 9.5, 13, 10, 15, 8 across the run: gentle
-   start, push at two thirds, everything before the writtens, a taper in the
-   last fortnight. That was a convention about how a preparation ought to be
-   paced, written here and measured by nobody, and it made the word
-   "conseillé" mean 17 h in August and 44 h in March. A yardstick that moves
-   is not one. Flattening it removes an assumption rather than adding one.
-   The peloton follows this same figure, so they flatten with it — the ratios
-   half / on / one-and-a-half hold week by week now, not only over the whole
-   preparation. */
+   Flat because a yardstick that moves is not one. Any curve here would be a
+   convention about how a preparation ought to be paced, written into the app
+   and measured by nobody — and it would make the word "conseillé" mean one
+   thing in August and another in March. Staying flat withholds an assumption
+   rather than making one.
+   The peloton is built on this same figure, so the ratios half / on /
+   one-and-a-half hold week by week, not merely over the whole preparation. */
 function targetWeekly(s){
   const n=Math.max(daysBetween(state.start,state.exam),1);
   return refTotal()*7/n;
@@ -1418,24 +1413,16 @@ function chapEroded(id,atDate){
 }
 
 /* ---- what a session is worth ----
-   An hour, and nothing else. A declared session used to weigh 0.95 against a
-   timed one, and a backdated one 0.85. Both discounts are gone: they were the
-   last multiplier standing between the figure on screen and the stopwatch, and
-   a number you cannot reproduce from your own memory of the week is a number
-   you end up not trusting.
-   What the distinction still decides is whether a day COUNTS — see below. A
-   session dated after the fact cannot carry a day of the chain, because there
-   is nothing left to check it against. That is a rule about validity, not a
-   price, and backdating has since been removed from the app entirely, so it
-   only ever concerns facts written before that.
-   Sessions recorded before this rule existed carry no `loggedOn`: they are
-   taken at their word.
-
-   The 0.85 branch is now history only: backdating was removed from the app,
-   and a manual session can be dated today and no other day. The rule stays
-   because the journal does — facts already written keep the meaning they had
-   when they were written, and a projection that stopped honouring them would
-   quietly rewrite the past. */
+   An hour, and nothing else. No multiplier stands between the figure on screen
+   and the stopwatch.
+   What this decides is whether a session can carry a day of the chain: one
+   dated after the fact cannot, because there is nothing left to check it
+   against. A rule about validity, not a price.
+   It concerns the journal alone. The app dates a session today and no other
+   day, so nothing written from now on can fail the test — but facts already
+   written keep the meaning they had when they were written, and a projection
+   that stopped honouring them would quietly rewrite the past. Sessions older
+   than the rule carry no `loggedOn` and are taken at their word. */
 function sessOnTime(x){return !x.manual||!x.loggedOn||x.loggedOn===x.date}
 
 /* WHEN A SESSION OF YOURS HAPPENED.
@@ -1475,10 +1462,8 @@ function userMetrics(s){
   }
   domCredits.sort((a,b)=>b-a);
   cov+=domCredits.slice(0,3).reduce((a,b)=>a+b,0);
-  /* Past-paper marks used to bend the estimate here — the one measurement of
-     your actual level anywhere in the model, worth up to a third of it. With
-     Marks are recorded and shown, and they are what the shared paper is for;
-     they move no number elsewhere. */
+  /* Marks are recorded and shown, and they are what the shared paper is for.
+     They move no number here: this counts coverage, not level. */
   return {wh, covCredit:cov, activeTotal:days.size, date:s};
 }
 
@@ -1530,12 +1515,9 @@ function thomasShape(s){
   return 7;
 }
 /* THE ONLY PLACE A RIVAL IS NAMED.
-   Their names used to be typed out again in twenty-three other spots — the
-   welcome screen, both chart legends, the settings paragraph, half a dozen
-   sentences — so renaming one meant hunting the file and hoping. Everything
-   on screen now reads `RIVALS[k].name`; nothing repeats it. `intro` is their
-   line on the welcome screen, `profil` the one under their name in the
-   standing.
+   Everything on screen reads `RIVALS[k].name`; nothing anywhere repeats it, so
+   renaming somebody is one edit here. `intro` is their line on the welcome
+   screen, `profil` the one under their name in the standing.
    What must NEVER change here is `tag`: it seeds their timetable, so editing
    it would rewrite every day they have ever worked. */
 const RIVALS={
@@ -1573,21 +1555,19 @@ function rivalEvents(k){
   _evCache[k]=ev;return ev;
 }
 /* ---- where each rival sits, relative to the reference ----
-   The peloton used to be three absolute rhythms — 6 to 15 h a week, 23 to 34,
-   1.5 to 9.5 — chosen to feel like three people and comparable to nothing.
-   They are now three landmarks on the one scale the whole app is built on:
-   half the reference, the reference itself, half again above it. Reading the
-   chart no longer requires knowing who anybody is.
+   Three landmarks on the one scale the whole app is built on: half the
+   reference, the reference itself, half again above it. Reading the standing
+   therefore requires knowing nothing about who anybody is.
 
-   Their character survives. Each shape is divided by its own mean, which turns
+   Their character is separate. Each shape is divided by its own mean, which turns
    it into a pure modulation — Laura still has the slump week that drops her to
    a third of her rhythm, Nicolas still has his — and the mean is then set by
    the ratio below. Level and personality became separate things. */
-/* Laura sits at 1.05 rather than 1.00 on purpose. The ghost works at 1.02 of
-   the reference, so a rival at exactly 1.00 would trace the same line as the
-   grey one and the chart would carry two curves saying one thing. Five percent
-   above is close enough to read as "she IS the reference" and far enough to
-   keep the two apart. */
+/* Laura sits at 1.05 rather than 1.00 on purpose: at exactly 1.00 her
+   projection would print the same number as the advised total, right beside
+   it, and read as a repetition of the scale rather than as somebody standing
+   on it. Five percent is close enough to mean "she IS the reference" and far
+   enough to be a second figure. */
 const RIVAL_RATIO={M:1.05, I:1.5, T:0.5};
 const _shapeMeans={};
 function shapeMeanOf(k){
@@ -1603,14 +1583,12 @@ function shapeMeanOf(k){
    the skip rule then removes short days entirely. Neither is symmetric, and
    they differ per rival because amp and skip do. Solved numerically over twelve
    seeds, not guessed.
-   Re-solved when the reference was flattened: the bell used to hand them their
-   volume unevenly across the run, and evening it out moved every one of them.
-   The weekly shared paper moved them a long way too. Ten hours forty of compulsory
+   The weekly shared paper weighs heavily on it. Ten hours forty of compulsory
    examination is a large, IDENTICAL cost imposed on three candidates of very
-   different volumes: it lifted the erratic one from 0.50 to 0.60 and pushed the
-   other two down, because on his own he does less in two days than the paper
-   takes, and they do more. A compulsory collective event compresses a peloton
-   toward its own size — which is true to life, and had to be undone here,
+   different volumes: on his own the erratic one does less in two days than the
+   paper takes, and the other two do more. A compulsory collective event
+   compresses a peloton toward its own size — which is true to life, and had to
+   be undone here,
    since the ratios are the design. Only the free days respond to this
    constant; the examination does not, which is why it took a solver rather
    than a division.
@@ -1700,13 +1678,11 @@ function chapForUnit(u){
 /* THE WEEK IS THE UNIT.
    A rival's week is a budget — reference x ratio, with its week-to-week swing
    and whatever an illness or a cyclone takes out of it — and the days inside
-   it merely share that budget out. It used to be the other way round: each day
-   was drawn on its own and the week was whatever they happened to add up to,
-   which drifted enormously. The direct rival was aimed at 31.7 h a week and
-   produced anything from 19.2 to 47.2; the erratic one, aimed at 15.1, ranged
-   from 1.3 to 31.6. The ratios held on the whole preparation and meant nothing
-   on any given week — so a standing in October said nothing either.
-   Days still vary as much as they ever did. The week no longer does. */
+   it merely share that budget out — never the other way round. Drawing each
+   day on its own and letting the week be whatever they added up to would make
+   the ratios hold over the whole preparation and mean nothing on any given
+   week, so a standing in October would mean nothing either.
+   Days vary freely. The week does not. */
 function rivalWeekPlan(k,monday){
   const R=RIVALS[k];
   const rw=rng(state.seed,R.tag+"w"+isoWeek(monday));
@@ -1815,31 +1791,21 @@ function rivalDays(k){
       const chap=chapForUnit(unitIdx);
       const tr=r();const phase=cumWh>R.consolAt;
       let type;
-      /* No annale outside the shared paper. The consolidation draw used to
-         hand one out on ordinary days — a private paper by another name, and
-         the whole point of a shared one is that it is the same paper, sat by
-         everyone, on the same morning. Its share goes back to the exercises
-         and the fiches. */
+      /* No annale outside the shared paper: a private one would be the same
+         paper by another name, and the whole point of a shared one is that
+         everybody sits it, on the same morning. */
       if(phase)type=tr<0.52?"exercices":(tr<0.80?"fiches":"relecture");
       else type=tr<0.45?"exercices":(tr<0.72?"cours":(tr<0.88?"fiches":"relecture"));
-      /* The shared paper is not "at least four hours" any more, it is the real
-         thing: eight hours of writing on day one, two hours forty of orals on
-         day two, the same for everybody. It overrides whatever the day had
-         drawn — nobody sits half a paper — and it escapes the daily cap, which
-         exists to keep ordinary days plausible and has no business trimming an
-         examination. */
-      /* The rival's own monthly paper is gone. It raised the day above what
-         the week had budgeted — Math.max over the plan — and put up to four
-         hours a month back outside the rule the week is supposed to obey. With
-         a shared paper every seven days it was redundant anyway; rivals still
-         show annale sessions through the ordinary type draw, at no extra cost
-         to the week. */
+      /* The shared paper is the real thing: eight hours of writing on day one,
+         two hours forty of orals on day two, the same for everybody. It
+         overrides whatever the day had drawn — nobody sits half a paper — and
+         it escapes the daily cap, which exists to keep ordinary days plausible
+         and has no business trimming an examination. */
       if(shared)type="annale";
       cumWh+=min/60;cumMin+=min;activeTotal++;
       // session time (drawn AFTER min/type: past history is left untouched)
       // — except the shared paper, which starts at the same hour for everyone,
-      // the way a real concours blanc does. the ceiling rival no longer sits it at 5 am and
-      // the erratic one no longer finishes it at 2 in the morning.
+      // the way a real concours blanc does: nobody sits it at 5 am.
       const sh=shared?ANNALE1_H:R.hw[0]+Math.floor(r()*R.hw[1]);
       const sm=shared?0:Math.floor(r()*12)*5;
       sess={min,type,chap,h:sh,m:sm};
@@ -1884,15 +1850,16 @@ async function maybeAdjust(){
 }
 
 /* ================= YOUR CURRENT PACE ================= */
-/* Weighted hours over the last twenty days, per week.
-   Divided by the days actually elapsed, with no floor. There used to be a
-   seven-day one, so that a single good Sunday could not pass for a rhythm. It
-   did not bound the error — it FROZE the reading: two and a half hours on day
-   one came out as 2.6 h/week instead of eighteen, and then sat unchanged for a
-   week whatever happened. In an app whose entire subject is what you do today,
-   a display that cannot move for seven days is the worst defect available.
-   Without it the divisor grows by one every day, so a day not worked halves
-   the projection the next morning. The first days do swing — five hours on day
+/* Hours over the last twenty days, per week.
+   Divided by the days actually elapsed, with no floor. A floor of seven days
+   would stop a single good Sunday passing for a rhythm, but it would not bound
+   the error — it would FREEZE the reading: two and a half hours on day one
+   coming out as 2.6 h/week instead of eighteen, and then sitting unchanged for
+   a week whatever happened. In an app whose entire subject is what you do
+   today, a display that cannot move for seven days is the worst defect
+   available.
+   Without a floor the divisor grows by one every day, so a day not worked
+   halves the projection the next morning. The first days do swing — five hours on day
    one really does read as five hours a day — and that is the honest meaning of
    "at this rate" when the rate is one day old. It corrects itself by the very
    thing that made it wrong: not working. */
@@ -2009,11 +1976,6 @@ function personHex(k){
   return {Y:dk?"#4da3ff":"#2563eb",M:dk?"#fc5200":"#ea580c",
           I:dk?"#c084fc":"#7c3aed",T:dk?"#eab308":"#ca8a04"}[k];
 }
-function chartTheme(){
-  if(state&&state.theme==="dark")
-    return {grid:"#2a2e40",axis:"#565b70",today:"#3a3f55",end:"#565b70",ghost:"#8b90a5",white:"#171922",areaOp:"0.28"};
-  return {grid:"#eaecf0",axis:"#98a2b3",today:"#d0d5dd",end:"#d0d5dd",ghost:"#94a3b8",white:"#ffffff",areaOp:"0.20"};
-}
 const SUN='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M19.2 4.8l-2.1 2.1M6.9 17.1l-2.1 2.1"/></svg>';
 const MOON='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>';
 function applyTheme(){
@@ -2055,15 +2017,13 @@ function restLegit(date){
   }
   return true;
 }
-/* What makes a day count towards the chain: real minutes, or the week's one
-   planned rest. */
-/* A day counts when you did ALL of what you promised, and not otherwise.
-   There used to be a twenty-minute floor: any day carrying twenty minutes held
-   the chain, promise or no promise. That made the commitment decorative — the
-   chain could be kept without ever taking one, and a promise of six hours was
-   satisfied by a quarter of an hour.
-   No promise, no day. Working ten hours on a day you promised nothing does not
-   count, which is the price of making the promise mean something. */
+/* A day counts when you did ALL of what you promised, and not otherwise — or
+   when it is the week's one declared rest.
+   No promise, no day: working ten hours on a day you promised nothing does not
+   count. Any floor short of the promise would make the commitment decorative,
+   since the chain could then be kept without ever taking one and a promise of
+   six hours would be satisfied by a quarter of an hour. That is the price of
+   making the promise mean something. */
 function dayHolds(date){
   const r=state.rdv[date];
   if(!r)return false;
@@ -2265,12 +2225,11 @@ function renderTiles(){
       wp.remain>0?"var(--grad-you)":"var(--ok)",
       wp.remain>0?"reste "+fmtH(wp.remain)+" sur les "+fmtH(tgtMin)+" hebdomadaires du conseillé"
                  :"semaine conseillée atteinte — "+fmtH(tgtMin))
-    // Coverage and 7-day regularity used to sit here. Regularity is what the
-    // chain says, better and over the whole preparation; coverage is the
+    // Neither coverage nor regularity belongs here: regularity is what the
+    // chain says, better and over the whole preparation, and coverage is the
     // Programme tab's whole subject, chapter by chapter.
-    // And the direct rival alone has become all three: she was never the only one working.
-    // The rivals are measured against the reference curve, not against your
-    // target: they never aimed at it, and at forty hours a week they would
+    // The rivals are measured against the reference, not against anything of
+    // yours: they never aimed at it, and at forty hours a week they would
     // read forty percent for ever, which says nothing about them.
     +pelotonTile(t,targetWeekly(t)*60);
 }
@@ -2344,9 +2303,8 @@ function renderTrends(){
 }
 
 /* ---- names, from RIVALS and from nowhere else ----
-   Everything that used to spell a rival out in the markup is filled in here
-   instead: the welcome badges, both chart legends, the settings line. Renaming
-   somebody is now one edit in RIVALS, not a search through the file. */
+   Nothing spells a rival out in the markup: the welcome badges and every
+   sentence that lists them are filled in from here. */
 function rivalList(){
   const n=RKEYS.map(k=>RIVALS[k].name);
   return n.slice(0,-1).join(", ")+" et "+n[n.length-1];
@@ -2460,6 +2418,18 @@ function renderAnnCount(){
    Working earlier seals it too, for the obvious reason: a promise you are
    already clearing cannot be lowered to meet what you managed.
    Tomorrow's promise is never sealed — tomorrow's hour has not come. */
+/* THE DAY CLOSES AT 20:00, AND NOTHING REOPENS IT.
+   Not a setting. A deadline you can move is a deadline you will move, at the
+   exact moment moving it is what you want to do — which is the moment it was
+   written for. Twenty o'clock, everywhere, for everybody.
+   Past it: the stopwatch will not start, a running one is cut, and the card
+   stops asking about today and asks about tomorrow. What was done before
+   counts in full and can still carry the day; what comes after does not
+   exist. */
+const DAY_END_H=20;
+function dayEndAt(date){return s2d(date).setHours(DAY_END_H,0,0,0)}
+function pastDayEnd(){return (new Date()).getHours()>=DAY_END_H}
+
 function rdvSealed(date){
   if(dayCredit(date)>0)return true;
   const t=todayStr();
@@ -2468,15 +2438,22 @@ function rdvSealed(date){
   const r=state.rdv[date];
   if(!r)return false;
   if(timerState()!=="idle")return true;
-  /* A rest is sealed the moment it is taken, because taking it hands the card
-     to tomorrow: there is no longer any screen from which to reach it. Saying
-     it stayed revisable was true of the flag and false of the app.
-     A promise of work is sealed by the hour it named. */
+  /* Sealed by the close of the day, whatever else is true of it: nothing can
+     happen after it, so nothing is left to revise.
+     A rest is sealed the moment it is taken, because taking it hands the card
+     to tomorrow and leaves no screen from which to reach it. A promise of work
+     is sealed by the hour it named. */
+  if(pastDayEnd())return true;
   if(r.min===0)return true;
   return (new Date()).getHours()>=r.h;
 }
 function rdvTarget(){
   const t=todayStr();
+  /* Once the day is closed there is nothing left to settle on it — kept,
+     missed or never promised — so the card asks about tomorrow. This is the
+     evening in which tomorrow gets planned, and without it a missed day would
+     hold the card until midnight with nothing to offer. */
+  if(pastDayEnd())return addDays(t,1);
   const r=state.rdv[t];
   /* The card stays on today while today still has something to settle: a
      promise of work not yet kept. A rest settles the day the moment it is
@@ -2553,17 +2530,25 @@ function renderRdv(){
 }
 function drawRdvPicker(d,when){
   const el=$("rdvBody");
-  const hours=[6,8,10,14,17,20];
+  const hours=[6,8,10,14,17];
   const mins=[60,120,240,360];
-  const row=(lb,arr,fmt,sel,cls)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
-    +arr.map(v=>'<button class="rdvchip'+(v===sel?" sel":"")+'" data-'+cls+'="'+v+'">'+fmt(v)+"</button>").join("")+"</div>";
+  const row=(lb,arr,fmt,sel,cls,ok)=>'<div class="rdv-row"><span class="lb">'+lb+"</span>"
+    +arr.map(v=>{const bad=ok&&!ok(v);
+      return '<button class="rdvchip'+(v===sel?" sel":"")+(bad?" dis":"")+'"'
+        +(bad?" disabled":"")+' data-'+cls+'="'+v+'">'+fmt(v)+"</button>"}).join("")+"</div>";
   const cur=state.rdv[d];
+  /* A duration that runs past the close cannot be honoured, so it cannot be
+     promised: the chain would break by construction, on a promise the app
+     itself forbids you to keep. Greyed rather than hidden — the reason is
+     visible, and it comes back the moment an earlier hour is picked. */
+  const selH=rdvPickH!==null?rdvPickH:(cur&&cur.min>0?cur.h:null);
+  const fits=v=>selH===null||selH*60+v<=DAY_END_H*60;
   const head=!cur?"Rien de prévu "+when
     :(cur.min===0?"Repos prévu "+when
       :when.charAt(0).toUpperCase()+when.slice(1)+" à "+cur.h+":00 · "+fmtH(cur.min));
   el.innerHTML='<div class="rdv-top"><span class="st">'+head+"</span></div>"
     +row("À quelle heure ?",hours,v=>v+":00",rdvPickH,"h")
-    +row("Combien de temps ?",mins,v=>fmtH(v),rdvPickM,"m")
+    +row("Combien de temps ?",mins,v=>fmtH(v),rdvPickM,"m",fits)
     +(cur&&cur.min===0
         ?'<div class="rdv-off" style="text-decoration:none;cursor:default">'
           +'<span class="chipd up">✓ Repos de la semaine</span> '
@@ -2573,7 +2558,10 @@ function drawRdvPicker(d,when){
             +" je ne travaille pas <span style=\"color:var(--faint)\">— repos de la semaine</span></button>"
           :'<div class="rdv-off" style="text-decoration:none;cursor:default">Repos de la semaine déjà pris</div>');
   el.querySelectorAll("[data-h]").forEach(b=>b.addEventListener("click",()=>{
-    rdvPickH=+b.dataset.h;maybeSaveRdv(d,when)}));
+    rdvPickH=+b.dataset.h;
+    // a duration already chosen may no longer fit under the new hour
+    if(rdvPickM!==null&&rdvPickH*60+rdvPickM>DAY_END_H*60)rdvPickM=null;
+    maybeSaveRdv(d,when)}));
   el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{
     rdvPickM=+b.dataset.m;maybeSaveRdv(d,when)}));
   const off=$("rdvOff");
@@ -2584,7 +2572,13 @@ function drawRdvPicker(d,when){
 }
 async function maybeSaveRdv(d,when){
   if(rdvPickH===null||rdvPickM===null){drawRdvPicker(d,when);return}
-  const h=rdvPickH,m=rdvPickM;rdvPickH=null;rdvPickM=null;
+  const h=rdvPickH,m=rdvPickM;
+  if(h*60+m>DAY_END_H*60){
+    rdvPickM=null;drawRdvPicker(d,when);
+    toast("La journée ferme à "+DAY_END_H+" h — cette durée n'y rentre pas.");
+    return;
+  }
+  rdvPickH=null;rdvPickM=null;
   await Peloton.record("rendezVousPris",{date:d,h,min:m});
   toast("Rendez-vous pris : "+when+" à "+h+":00, "+fmtH(m)+". Modifiable jusqu'à "+h+":00.");
 }
@@ -2771,12 +2765,10 @@ function buildFeed(){
       week:null,note:null});
   }
   /* Newest first, by the clock — within a day as well as across days.
-     It used to fall back to a fixed order of people once the dates matched, so
-     a day read: all of yours in the order they were written, then Laura's,
-     then Magalie's, whatever time any of it happened. A feed whose second
-     level of sorting is "whose line is it" is not a feed, it is three lists
-     printed one after another. Lines with no recorded time sit at the end of
-     their day; the order of people only ever breaks a genuine tie. */
+     A feed whose second level of sorting is "whose line is it" would not be a
+     feed, it would be four lists printed one after another. Lines with no
+     recorded time sit at the end of their day; the order of people only ever
+     breaks a genuine tie. */
   const ord={Y:0,M:1,I:2,T:3};
   items.sort((a,b)=>
     a.date!==b.date?(a.date<b.date?1:-1)
@@ -2802,8 +2794,7 @@ function renderFeed(){
         +(it.week!=null?' · semaine '+fmtH(it.week):'')+'</div>'+
       (it.note?'<div class="note" style="border-left-color:'+personHex(it.who)+'">« '+it.note+' »</div>':'')+
       '</div>'+
-      // The bin moves here with the duration: the date it used to hang from is
-      // now at the bottom of the entry.
+      // The bin sits with the duration, on the right of the entry.
       '<div class="dur">'+fmtH(it.min)
         +(it.id?'<button class="del" data-del="'+it.id+'" title="Supprimer cette session">'+TRASH+'</button>':'')
       +'</div></div>';
@@ -2917,7 +2908,7 @@ function renderAnn(){
   }else $("nextAnn").innerHTML="Plus d'annale planifiée : les écrits sont là.";
   /* Entry is open on the two examination days and shut on every other. A mark
      typed on the Tuesday after is not a result, it is a memory — the same
-     reason a session can no longer be backdated. */
+     reason a session cannot be backdated. */
   const cur=todayAnnale();
   $("annForm").style.display=cur?"block":"none";
   $("annClosed").style.display=cur?"none":"block";
@@ -3034,7 +3025,7 @@ function maybeDebrief(){
   const me=ppl[0],manon=ppl.find(x=>x.k==="M"),thomas=ppl.find(x=>x.k==="T");
   let verdict;
   if(me.h===0)verdict="Semaine blanche. Le peloton, lui, a roulé.";
-  else if(me.h>=Math.max(...ppl.map(x=>x.h)))verdict="Plus gros volume du peloton cette semaine. Ça se verra sur la courbe.";
+  else if(me.h>=Math.max(...ppl.map(x=>x.h)))verdict="Plus gros volume du peloton cette semaine.";
   else if(thomas.h>me.h)verdict=thomas.name+" a fait plus d'heures que toi cette semaine. "+thomas.name+".";
   else if(manon.h>me.h)verdict=manon.name+" te met "+fmtH(manon.h-me.h)+" dans la vue cette semaine.";
   else verdict="Tu as pris "+fmtH(me.h-manon.h)+" d'avance sur "+manon.name+" cette semaine.";
@@ -3151,20 +3142,22 @@ function fmtT(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%
 function renderChronoHint(){
   const e=$("chronoHint");if(!e)return;
   const r=state.rdv[todayStr()];
-  e.innerHTML=!r
+  e.innerHTML=pastDayEnd()
+    ? "Journée close depuis "+DAY_END_H+" h.<br>Ce qui est fait est fait — prends ton engagement de demain."
+    : !r
     ? "Le chrono ne démarre pas sans engagement.<br>Prends celui du jour sur la page Peloton."
     : (r.min===0
         ? "Repos prévu aujourd'hui. Rien à chronométrer — et la chaîne tient."
         : "Promis aujourd'hui : <b>"+fmtH(r.min)+"</b> à "+r.h+":00.<br>La journée compte quand tu y es, pas avant.");
 }
 function updateTimerUI(){
-  if(state.timerDay&&state.timerDay!==todayStr()&&timerState()!=="idle"){
-    closeTimerAtMidnight();return;
+  if(timerState()!=="idle"&&state.timerDay&&Date.now()>=dayEndAt(state.timerDay)){
+    closeTimerAtDeadline();return;
   }
   const s=timerState(),btn=$("timerBtn"),pb=$("pauseBtn");
   btn.classList.toggle("on",s==="run");
   btn.classList.toggle("paused",s==="pause");
-  const locked=s==="idle"&&!state.rdv[todayStr()];
+  const locked=s==="idle"&&(pastDayEnd()||!state.rdv[todayStr()]);
   btn.classList.toggle("locked",locked);
   btn.childNodes[0].textContent=s==="idle"?(locked?"VERROUILLÉ":"DÉMARRER"):"TERMINER";
   $("timerT").textContent=s==="idle"?"0:00":fmtT(timerElapsed());
@@ -3175,32 +3168,35 @@ function updateTimerUI(){
 }
 function stopTick(){if(tick){clearInterval(tick);tick=null}}
 
-/* MIDNIGHT CUTS THE SESSION.
-   A stopwatch running across midnight belongs to the day it started on, and
-   only up to midnight: the minutes after it are a different day's, and a
-   session dated by the moment it was SAVED would hand a whole night's work to
-   a day that had not begun when it was done.
-   So it is closed where the day ends. What was done before midnight is
-   recorded against that day — even when it cannot validate it, which is the
-   usual case, since the promise was made for hours that have run out.
-   The subject and type are taken from the last session logged: nobody is
-   awake to be asked, and losing the time would be worse than guessing the
-   chapter. Checked on every tick and again at every launch, so a stopwatch left
-   running while the app was closed is still cut in the right place. */
-async function closeTimerAtMidnight(){
+/* THE CLOSE CUTS A RUNNING STOPWATCH.
+   A stopwatch belongs to the day it started on, and only up to that day's
+   close: a session dated by the moment it was SAVED would hand a whole evening
+   to a day that had not begun when it was worked.
+   What was done before 20:00 is recorded against that day and counts in full —
+   it can still carry the day if it reaches the promise. What ran after is
+   dropped, which is the point of a deadline.
+   The subject and type are taken from the last session logged: nobody is there
+   to be asked, and losing the time would be worse than guessing the chapter.
+   Checked on every tick and at every launch, so a stopwatch left running while
+   the app was closed — for an evening or for a week — is still cut at the
+   close of the day it began on. */
+async function closeTimerAtDeadline(){
   if(timerState()==="idle")return false;
   const day=state.timerDay;
-  if(!day||day===todayStr())return false;
-  const midnight=s2d(addDays(day,1)).setHours(0,0,0,0);
-  const acc=(state.timerAcc||0)+(state.timerStart?Math.max(0,midnight-state.timerStart):0);
+  if(!day)return false;
+  const end=dayEndAt(day);
+  if(Date.now()<end)return false;
+  const acc=(state.timerAcc||0)+(state.timerStart?Math.max(0,end-state.timerStart):0);
   const min=Math.round(acc/60000);
   setTimer(null,0,null);stopTick();
-  if(min<5){toast("Chrono du "+fmtDate(day)+" fermé à minuit — moins de 5 min, non compté.");return true}
+  if(min<5){toast("Chrono coupé à "+DAY_END_H+" h — moins de 5 min, non compté.");return true}
   const last=state.sessions.length?state.sessions[state.sessions.length-1]:null;
   const mat=last?last.mat:"fr",type=last?last.type:"cours";
   await Peloton.recordMany([{kind:"sessionLogged",
-    data:{id:uid("s"),date:day,min,mat,type,chap:null,manual:false,loggedOn:day,at:"00:00"}}]);
-  toast(fmtH(min)+" comptées sur le "+fmtDate(day)+" — le chrono a été coupé à minuit.");
+    data:{id:uid("s"),date:day,min,mat,type,chap:null,manual:false,loggedOn:day,
+          at:pad(DAY_END_H)+":00"}}]);
+  toast(fmtH(min)+" comptées"+(day===todayStr()?"":" sur le "+fmtDate(day))
+    +" — le chrono a été coupé à "+DAY_END_H+" h.");
   return true;
 }
 
@@ -3222,6 +3218,10 @@ function toggleTimer(){
        long it is worked — and letting the timer run on it would record hours
        that go nowhere. The gate is here rather than in a warning because a
        warning you can dismiss is not a gate. */
+    if(pastDayEnd()){
+      toast("Journée close depuis "+DAY_END_H+" h. Le travail reprend demain.");
+      return;
+    }
     if(!state.rdv[todayStr()]){
       toast("Prends ton engagement du jour d'abord.",{label:"Y aller",fn:()=>W.goPage("duel")});
       return;
@@ -3387,10 +3387,10 @@ async function checkMilestones(silent){
   let nC=0;for(const c of CHAPS){if(!c.oral&&state.chaps[c.id]&&state.chaps[c.id].s===2)nC++}
   const bestAnn=state.annales.reduce((mx,a)=>Math.max(mx,annScore(a)||0),0);
   const sk=streakDays().n;
-  /* The ladder used to end at 300 h, which suited eight hours a week. At six
-     hours a day the whole of it fell before day 50 and then nothing came for
-     six months — the interval between rewards growing exactly as the fatigue
-     does. It now runs to 1250 h, and days worked sit alongside hours so that
+  /* The ladder runs to 1250 h. Ending it lower would suit eight hours a week
+     and no more: at six hours a day the whole of it would fall before day 50
+     and then nothing would come for six months — the interval between rewards
+     growing exactly as the fatigue does. Days worked sit alongside hours so that
      the count you cannot inflate by sitting longer has its own rungs. */
   const defs=[
     ["h25","25 h de travail cumulées",tot>=1500],
@@ -3485,16 +3485,16 @@ function buildNotifPlan(horizon){
        for a 14:00 slot is perfectly fine — only the day counts — and being
        reminded at 14:00 of something finished eight hours earlier is the kind
        of notification that gets an app muted.
-       The follow-up is measured against the same bar as everything else. It
-       used to test the 20-minute streak floor, so someone who had done 25 of a
-       promised 120 got no nudge at all: the one person it was written for. */
+       The follow-up is measured against the same bar as everything else — the
+       promise in full. Any lower bar would leave someone who had done 25 of a
+       promised 120 with no nudge at all: the one person it is written for. */
     const need=r.min,done=dayCredit(d);
     if(done>=need)continue;
     plan.push({at:d+"T"+pad(r.h)+":00",
       title:"Tu as dit "+r.h+":00",
       body:fmtH(r.min)+" — c'est l'heure."});
     const late=r.h*60+90;
-    if(late<24*60)plan.push({at:d+"T"+pad(Math.floor(late/60))+":"+pad(late%60),
+    if(late<DAY_END_H*60)plan.push({at:d+"T"+pad(Math.floor(late/60))+":"+pad(late%60),
       title:"Tu avais dit "+r.h+":00",
       body:done>0?"Encore "+fmtH(need-done)+" et c'est tenu."
                  :"Vingt minutes, ça compte. Le reste attend."});
@@ -3552,10 +3552,9 @@ function pushPlanToNative(){
    cancelled". That fact travels like any other, so the other device resets
    itself at its next synchronisation.
 
-   This is what definitively fixes the old "resetting brings the data back"
-   defect: there is no longer a file to delete at the right moment nor a
-   write buffer to flush — only one more fact, and a fact is never
-   forgotten. */
+   Nothing has to be deleted at the right moment and no write buffer has to be
+   flushed — there is only one more fact, and a fact is never forgotten. This
+   is why a reset cannot bring the data back. */
 async function doReset(){
   if(!confirm("Tout effacer, sur TOUS tes appareils ? Ton historique, le peloton, tout."))return;
   if(!confirm("Sûr ? Tout repart de zéro."))return;
@@ -3744,7 +3743,7 @@ function wireInterface(){
     if(v.e1==null&&v.e2==null&&v.o1==null&&v.o2==null){toast("Saisis au moins une note.");return}
     await Peloton.record("annaleLogged",Object.assign({id:uid("a"),date:cur.date},v));
     const ms=await checkMilestones(true); // silent: merged into THIS toast
-    toast("Annale enregistrée — courbe recalée."+(ms.length?" Jalon : "+ms[0]+".":""));
+    toast("Annale enregistrée."+(ms.length?" Jalon : "+ms[0]+".":""));
   });
 
   $("examDate").addEventListener("change",()=>{
@@ -3781,6 +3780,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
   rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvSealed,
+  DAY_END_H,dayEndAt,pastDayEnd,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,

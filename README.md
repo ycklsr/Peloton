@@ -29,10 +29,15 @@ stopwatch. No score, no index, no probability of being admitted — see
   four hours of French and maths, four on three chosen domains, then the orals
   the next morning. Ten hours forty. The whole peloton sits it at the same hour.
 - **Asks you, each evening, for tomorrow.** A time and a duration, chosen the day
-  before — the one commitment the app holds you to. One declared rest day a week
-  is allowed and breaks nothing.
-- **Keeps the chain.** A day counts at twenty minutes; the calendar of lit days
-  is the only record of consistency that cannot be inflated by sitting longer.
+  before — the one commitment the app holds you to, and the stopwatch will not
+  run without it. One declared rest day a week is allowed and breaks nothing.
+- **Keeps the chain.** A day counts at a hundred percent of what was promised
+  and not otherwise — no promise, no day, however long it is worked. The
+  calendar of lit days is the one record of consistency that cannot be inflated.
+- **Closes the day at eight in the evening.** Past it the stopwatch will not
+  start, a running one is cut where the day ends, and the card stops asking
+  about today and asks about tomorrow. Not a setting: a deadline you can move
+  is one you will move, at exactly the moment it was written for.
 - **Schedules system notifications** — the rivals' sessions, your own
   appointment, the shared paper. The plan for the next ten days is rebuilt on
   every action and every launch.
@@ -62,7 +67,7 @@ The types are recorded and shown; they describe a session, they do not price it.
 
 The advised total is a setting, and it is documented as a convention rather than
 a measurement: preparation providers converge on 600 to 900 hours for a
-nine-to-twelve month run, and the default sits just above that band. Raise it or
+nine-to-twelve month run, and the default sits at the top of it. Raise it or
 lower it and the whole scale follows, the peloton included.
 
 The consequence is accepted rather than hidden: programme coverage and
