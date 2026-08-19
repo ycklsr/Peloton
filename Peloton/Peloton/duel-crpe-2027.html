@@ -3147,6 +3147,24 @@ function timerElapsed(){
 }
 function fmtT(sec){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   return h?h+":"+pad(m)+":"+pad(s):m+":"+pad(s)}
+/* WHAT IS LEFT TO DO, AND WHETHER IT STILL FITS BEFORE THE CLOSE.
+   The picker refuses a promise that would run past 20:00, but nothing refused
+   a SESSION that cannot finish before it: starting at 19:00 with three hours
+   still owed used to be silent, and the stopwatch was cut an hour later having
+   banked one of them. The protection guarded the intention and not the act.
+   Null when there is nothing to say — no promise, a rest, the promise already
+   kept, the day already closed, or simply enough time left. It only speaks
+   when what you still owe no longer fits, which is the only moment the
+   information changes anything. */
+function dayShortfall(){
+  const t=todayStr(),r=state.rdv[t];
+  if(!r||r.min===0)return null;
+  const left=r.min-dayCredit(t);
+  if(left<=0)return null;
+  const n=new Date(),until=DAY_END_H*60-(n.getHours()*60+n.getMinutes());
+  if(until<=0)return null;
+  return left>until?{left,until}:null;
+}
 function renderChronoHint(){
   const e=$("chronoHint");if(!e)return;
   const r=state.rdv[todayStr()];
@@ -3156,7 +3174,14 @@ function renderChronoHint(){
     ? "Le chrono ne démarre pas sans engagement.<br>Prends celui du jour sur la page Peloton."
     : (r.min===0
         ? "Repos prévu aujourd'hui. Rien à chronométrer — et la chaîne tient."
-        : "Promis aujourd'hui : <b>"+fmtH(r.min)+"</b> à "+r.h+":00.<br>La journée compte quand tu y es, pas avant.");
+        : (()=>{
+            const sh=dayShortfall();
+            return "Promis aujourd'hui : <b>"+fmtH(r.min)+"</b> à "+r.h+":00.<br>"
+              +(sh
+                 ?'<span style="color:var(--warn)">Il reste '+fmtH(sh.left)
+                   +" à faire et la journée ferme dans "+fmtH(sh.until)+".</span>"
+                 :"La journée compte quand tu y es, pas avant.");
+          })());
 }
 function updateTimerUI(){
   if(timerState()!=="idle"&&state.timerDay&&Date.now()>=dayEndAt(state.timerDay)){
@@ -3234,8 +3259,15 @@ function toggleTimer(){
       toast("Prends ton engagement du jour d'abord.",{label:"Y aller",fn:()=>W.goPage("duel")});
       return;
     }
+    /* Warned, never blocked. An hour worked is an hour that counts towards
+       the total even when it cannot carry the day, so refusing to start would
+       cost more than it saves. Measured before the stopwatch runs, so the
+       figures are the ones you are deciding on. */
+    const sh=dayShortfall();
     setTimer(Date.now(),0,todayStr());
     if(!tick)tick=setInterval(updateTimerUI,1000);
+    if(sh)toast("Il reste "+fmtH(sh.left)+" à faire, et la journée ferme dans "
+      +fmtH(sh.until)+". Le chrono sera coupé à "+DAY_END_H+" h.");
     return;
   }
   const min=Math.round(timerElapsed()/60);
@@ -3797,7 +3829,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   annale1,sharedAnnales,isShared,isSharedDay2,sharedMinutes,nextShared,nextAnnale,isAnnaleDay,
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
   rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvSealed,
-  DAY_END_H,dayEndAt,pastDayEnd,
+  DAY_END_H,dayEndAt,pastDayEnd,dayShortfall,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,sessDue,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
