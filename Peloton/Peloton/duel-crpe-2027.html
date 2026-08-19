@@ -2709,16 +2709,24 @@ function weekMinsRival(k,ref){
   return m;
 }
 
-/* FEED ARRIVAL THRESHOLD — a SINGLE definition, shared by buildFeed and by the
-   boot ticker. The `d.date>t` filter works at DAY granularity: without a clock
-   guard, today's session showed up from midnight — a rival "worked at 7:00 pm"
-   when it is 5 pm, past-tense note included. Rule shared with buildNotifPlan:
-   a session enters the feed at the instant it rings. */
+/* WHEN A RIVAL'S SESSION BECOMES HERS — a SINGLE definition, shared by the
+   feed, the weekly totals, the standing and the notification plan.
+   The threshold is the END of the session, not its start. Hours belong to
+   whoever has worked them, and a session credited when it BEGINS hands over
+   its whole duration in advance: six hours of an eight-hour paper counted at
+   breakfast, a past-tense feed line for work still being done, and a standing
+   you are losing to on the strength of an afternoon nobody has had yet. The
+   error equals the length of the session, and 84% of them run two hours or
+   more.
+   A session finishing after midnight is therefore not due on its own day. It
+   arrives the next one through the `d.date<t` branch, which is where its last
+   minute actually falls. */
 function sessDue(d,t){
   if(d.date<t)return true;
   if(d.date>t||!d.sess)return false;
   const n=new Date();
-  return (d.sess.h!=null?d.sess.h:18)*60+(d.sess.m||0)<=n.getHours()*60+n.getMinutes();
+  const start=(d.sess.h!=null?d.sess.h:18)*60+(d.sess.m||0);
+  return start+d.min<=n.getHours()*60+n.getMinutes();
 }
 /* number of rival sessions that have already landed today: the ticker uses it
    as a change signal (one more = one entry to bring on screen). */
@@ -3459,9 +3467,18 @@ function buildNotifPlan(horizon){
     }
     picks.sort((a,b)=>"MIT".indexOf(a.k)-"MIT".indexOf(b.k));
     picks.slice(0,2).forEach(p=>{
-      // same time as in the feed: no seam between the two
+      /* Rings when the session ENDS — the same instant the feed line arrives,
+         so there is no seam between the two. One that runs past midnight rings
+         the next morning, on the day its last minute falls. */
       const hh=p.day.sess.h!=null?p.day.sess.h:18,mm=p.day.sess.m!=null?p.day.sess.m:0;
-      plan.push({at:d+"T"+pad(hh)+":"+pad(mm),
+      const end=hh*60+mm+p.day.min,e=end%1440;
+      const ring=end>=1440?addDays(d,1):d;
+      /* A session whose last minute falls outside the window gets no reminder
+         at all. Ringing at its start instead would put the notification back
+         in front of the feed line it announces, which is the seam this rule
+         exists to close. */
+      if(ring>addDays(t,horizon)||ring>=state.exam)return;
+      plan.push({at:ring+"T"+pad(Math.floor(e/60))+":"+pad(e%60),
         title:RIVALS[p.k].name+" — "+fmtH(p.day.min),
         body:p.day.sess.chap+" ("+TYPE_LABEL[p.day.sess.type]+")"});
     });
@@ -3781,7 +3798,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   annScore,annFull,todayAnnale,buildWidgetPlan,weekReference,dayCredit,
   rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvSealed,
   DAY_END_H,dayEndAt,pastDayEnd,
-  checkMilestones,RIVALS,RKEYS,rivalList,sessTime,hmMinus,buildFeed,
+  checkMilestones,RIVALS,RKEYS,rivalList,sessTime,sessDue,hmMinus,buildFeed,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
   project,emptyState,LEGACY,
