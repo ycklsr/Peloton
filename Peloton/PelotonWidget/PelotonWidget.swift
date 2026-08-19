@@ -56,13 +56,22 @@ struct PelotonProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PelotonEntry>) -> Void) {
         let all = entries()
-        guard let last = all.last else {
+        guard !all.isEmpty else {
             completion(Timeline(entries: [placeholder(in: context)], policy: .after(.now.addingTimeInterval(3600))))
             return
         }
-        // Ask again shortly after the plan runs out. If the app has not run by
-        // then, the extrapolation below keeps the countdown exact anyway.
-        completion(Timeline(entries: all, policy: .after(last.date.addingTimeInterval(3600))))
+        /* Come back within the hour — not when the plan runs out, three weeks
+           from now.
+           Inside a single day the tile holds exactly one entry, so the minutes
+           worked today reach it only when the app's explicit reload lands. That
+           reload is the fast path and it is normally instant. But when one is
+           lost, a policy pointing three weeks out means nothing else ever
+           comes: at the next midnight the tile steps to the next entry of the
+           stale timeline, which carries no minutes and no target, and it reads
+           "0 min" every day until the plan expires.
+           An hour bounds that. The app keeps the fast path; this only makes
+           sure a tile that went wrong repairs itself. */
+        completion(Timeline(entries: all, policy: .after(.now.addingTimeInterval(3600))))
     }
 
     /// The plan, plus a fortnight of extrapolation past its end.
