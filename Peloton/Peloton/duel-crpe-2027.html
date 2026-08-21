@@ -194,7 +194,11 @@ header.app{display:flex;align-items:center;justify-content:space-between;padding
 .entry .dur .del{display:block;margin-left:auto;padding:5px 0 0}
 .entry .note{font-size:12.5px;color:var(--dim);font-style:italic;margin-top:7px;padding:8px 11px;
   background:var(--card2);border-radius:4px 12px 12px 4px;border-left:3px solid var(--faint)}
-.morebtn{width:100%;padding:11px;background:none;border:1.5px dashed var(--line);border-radius:12px;color:var(--dim);font-size:13px;cursor:pointer;margin-top:10px;font-weight:600}
+.feedpager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.feedpager .pgn{font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pgbtn{min-height:40px;padding:0 16px;background:var(--card2);border:1px solid var(--line);
+  border-radius:10px;color:var(--txt);font-size:13.5px;font-weight:600;cursor:pointer}
+.pgbtn:disabled{color:var(--faint);cursor:default}
 /* timer */
 .chrono{display:flex;flex-direction:column;align-items:center;padding:32px 0 12px}
 .bigbtn{width:196px;height:196px;border-radius:50%;border:none;cursor:pointer;
@@ -424,7 +428,7 @@ nav.tabs button.act{color:var(--you)}
     <div class="card feed">
       <h2>Activité</h2>
       <div id="feed"></div>
-      <button class="morebtn" id="moreFeed" style="display:none">Voir plus</button>
+      <div class="feedpager" id="feedPager"></div>
     </div>
   </section>
 
@@ -727,7 +731,25 @@ const PIQUES=[
  "Les stats de l'académie sont violentes. Tant mieux : ça décourage les autres.",
  "J'ai testé réviser sans téléphone dans la pièce. Écart de productivité gênant.",
  "Le chapitre que je détestais est devenu celui où je suis la plus solide.",
- "Fin de session. Même heure demain."
+ "Fin de session. Même heure demain.",
+ "Le TD de ce matin ne m'a rien appris. Ma session de ce soir, si.",
+ "J'ai posé mes révisions sur le trajet de bus. Vingt minutes par jour, ça fait des heures.",
+ "Numération décimale : terminé. Je remonte la liste par le bas.",
+ "On m'a proposé un week-end à Cilaos. J'ai dit non. C'est tout.",
+ "Le programme de géométrie n'est pas difficile. Il est long. Ce n'est pas pareil.",
+ "Deux heures ce matin avant les cours. Personne dans l'amphi ne le sait.",
+ "J'ai arrêté de compter les jours. Je compte les chapitres.",
+ "Les fiches des autres circulent sur le groupe. Les miennes restent chez moi.",
+ "Mon erreur d'hier sur les fractions : comprise, corrigée, rangée.",
+ "Alizés ce matin. Fenêtre ouverte, quatre heures de maths.",
+ "Le jury ne saura pas que j'ai révisé un dimanche. Moi si.",
+ "J'ai baissé mon temps de rédaction de dix minutes ce mois-ci.",
+ "Histoire-géo cycle 3 : le meilleur rapport temps/points du programme.",
+ "Quelqu'un a dit que le concours se joue en mars. Il se joue maintenant.",
+ "Session finie à l'heure prévue. Comme la précédente.",
+ "J'ai relu le rapport de jury en entier. Deux fois. Ça se voit dans mes copies.",
+ "La régularité n'est pas un talent. C'est une décision qu'on reprend chaque matin.",
+ "Trois mois sans sauter une session. Ça ne se raconte pas, ça se compte."
 ];
 const INES_NOTES=[
  /* "17 h" was her old volume; she does about 29 now. The rest of her is
@@ -739,7 +761,47 @@ const INES_NOTES=[
  "Rien d'héroïque. Juste le plan, exécuté.",
  "Une annale chaque samedi. Le reste s'organise autour.",
  "Les jeunes du concours ont le temps devant eux. Moi, j'ai une raison.",
- "Session du soir après les devoirs des enfants. Celles-là comptent double."
+ "Session du soir après les devoirs des enfants. Celles-là comptent double.",
+ "5 h 10. Café, bureau, deux heures avant que la maison bouge.",
+ "Mon ancien poste me manque certains jours. Pas assez pour y retourner.",
+ "Les enfants savent que le matin, c'est mon créneau. Ça a pris trois semaines.",
+ "Épreuve 2, domaine sciences : bouclé. Je passe à l'histoire.",
+ "Je ne révise pas plus que les autres. Je révise à des heures où ils dorment.",
+ "J'ai posé mes congés de février. Pour réviser, évidemment.",
+ "Un CDI, c'est confortable. C'est même le problème.",
+ "Trois heures ce matin. Le reste de la journée m'appartient.",
+ "J'ai fait mes fiches à la main. Plus lent, mieux retenu.",
+ "Personne ne m'a dit que ce serait facile. On m'a dit que ce serait long.",
+ "Le plus dur n'est pas de travailler. C'est de s'arrêter à l'heure prévue.",
+ "Mon mari a repris les courses du samedi. C'est comme ça qu'on y arrive.",
+ "Deuxième passage sur les fractions. Le premier ne suffisait pas.",
+ "Je n'ai pas 20 ans. J'ai une méthode, à la place.",
+ "Réveil raté ce matin. Rattrapé ce soir, intégralement.",
+ "Français cycle 2 : je croyais connaître. Je ne connaissais pas.",
+ "Les oraux me font moins peur que les écrits. J'ai passé quinze ans en réunion.",
+ "J'ai relu mes fiches de septembre. Elles tiennent encore.",
+ "Quatre heures aujourd'hui. Ni plus, ni moins que prévu.",
+ "Le concours ne demande pas d'être brillante. Il demande d'être là.",
+ "J'ai expliqué la proportionnalité à ma fille. Meilleure révision de la semaine.",
+ "Une heure perdue le matin ne se rattrape jamais vraiment.",
+ "Géométrie dans l'espace. Trois jours dessus. C'était nécessaire.",
+ "Le planning de la semaine est écrit le dimanche soir. Toujours.",
+ "J'ai arrêté de lire les forums. Ça ne fait pas avancer une fiche.",
+ "Épreuve orale : je m'entraîne devant le miroir. C'est ridicule et ça marche.",
+ "Mon objectif n'est pas d'être admise. C'est de n'avoir rien à regretter.",
+ "Session du dimanche matin pendant que la maison dort. Ma préférée.",
+ "J'ai repris les bases du calcul mental. Sans honte.",
+ "On m'a demandé si je n'étais pas trop vieille. J'ai répondu par mon planning.",
+ "Les vacances scolaires sont mes semaines les plus faibles. Je le sais, je compense.",
+ "Grammaire ce matin, maths cet après-midi, oral ce soir. Journée pleine.",
+ "Je ne travaille pas plus vite qu'avant. Je perds moins de temps.",
+ "Le programme est couvert. Maintenant on le solidifie.",
+ "J'ai fait une pause de deux jours. Décidée, pas subie.",
+ "Chaque heure ici est une heure que je ne passe pas ailleurs. C'est le prix.",
+ "J'ai calculé combien de réveils il me reste. Je ne le referai pas.",
+ "Le silence de 5 h du matin vaut trois heures d'après-midi.",
+ "Mes fiches de l'an dernier étaient mauvaises. Je le vois maintenant.",
+ "Rien d'exceptionnel aujourd'hui. Exactement ce qu'il fallait."
 ];
 const THOMAS_NOTES=[
  "Bon. Semaine compliquée. Je m'y remets lundi, promis.",
@@ -751,7 +813,45 @@ const THOMAS_NOTES=[
  "Franchement, il reste le temps. Enfin je crois.",
  "La grammaire c'est logique en fait ? On me l'avait jamais dit.",
  "Ok, j'ai lu le programme en entier pour la première fois. Ah.",
- "Grosse session cette nuit. Me demandez pas pourquoi à cette heure-là."
+ "Grosse session cette nuit. Me demandez pas pourquoi à cette heure-là.",
+ "J'ai mis une alarme à 7 h. Je l'ai vue à 11 h.",
+ "Objectif de la semaine : ouvrir le classeur. Fait. On progresse.",
+ "La bibliothèque de l'Arsenal ferme à 22 h. Utile à savoir, un jour.",
+ "J'ai acheté trois surligneurs. C'est un investissement dans mon avenir.",
+ "Quelqu'un m'a parlé du rapport de jury. Il paraît qu'il faut le lire ?",
+ "Deux heures de maths. J'ai compris une heure et quart. C'est un ratio.",
+ "J'ai fait un planning en couleurs. Très beau. Pas suivi.",
+ "Le CRPE c'est en avril. Avril c'est loin. Enfin, moins qu'avant.",
+ "J'ai révisé dans le métro. Ligne A. Quinze minutes. Ça compte.",
+ "Mon coloc révise l'agrég. On se déprime mutuellement, c'est convivial.",
+ "J'ai commencé les fractions. J'ai fini les fractions. Enfin, commencé.",
+ "Session de 23 h à 1 h. Mes meilleures heures, apparemment.",
+ "J'ai retrouvé un cours de L2 qui servait. Le passé a du bon.",
+ "Bon, cette semaine c'était pas ça. La prochaine, si.",
+ "J'ai lu que la régularité comptait plus que le volume. Ça m'arrange à moitié.",
+ "Toulouse sous la pluie, moi devant mes fiches. Corrélation ?",
+ "J'ai fait une annale en conditions réelles. Enfin, presque. Enfin, chez moi.",
+ "Note à l'annale : on ne parlera pas de la note à l'annale.",
+ "J'ai un tableur de suivi. Une seule cellule est remplie.",
+ "Le chapitre sur les décimaux m'a humilié. Je l'ai refait.",
+ "Trois heures aujourd'hui. Je ne me reconnais pas.",
+ "J'ai rangé mon bureau pendant deux heures. C'est presque du travail.",
+ "Il paraît qu'il faut faire de l'oral aussi. Une chose à la fois.",
+ "J'ai regardé une vidéo de méthode. Vingt-cinq minutes. Ça compte, non ?",
+ "Mes fiches de géométrie sont belles. C'est déjà ça.",
+ "J'ai raté deux jours. Je préfère le dire que le cacher.",
+ "Le programme fait 40 pages. Je l'ai imprimé. C'est un début.",
+ "Réviser le dimanche, c'est contre nature. J'ai révisé quand même.",
+ "J'ai compris la proportionnalité aujourd'hui. Mieux vaut tard.",
+ "Un café, deux cafés, trois cafés. Puis une heure de travail. Bilan discutable.",
+ "J'ai un ami qui a eu le concours du premier coup. Je ne lui parle plus.",
+ "Cette semaine : quatre heures. La précédente : zéro. Je monte.",
+ "J'ai fait une fiche récapitulative de mes fiches. Le problème est ailleurs.",
+ "On m'a dit que le pire c'est de commencer. Le pire c'est de continuer.",
+ "J'ai révisé pendant que le linge tournait. Multitâche.",
+ "Sciences : je pensais ne pas aimer. J'aime. Bonne nouvelle.",
+ "Bon, j'ai un rythme maintenant. Irrégulier, mais un rythme.",
+ "Je suis loin derrière. Je le sais. Je continue quand même."
 ];
 /* ╔═════════════════════════════════════════════════════════════════════════╗
    ║  STATE — THE JOURNAL OF FACTS                                           ║
@@ -1904,9 +2004,43 @@ function rivalNoteFor(k,s,sess){
   const pool=k==="M"?PIQUES:(k==="I"?INES_NOTES:THOMAS_NOTES);
   return pool[permIdx(k,Math.floor(seq/2),pool.length)];
 }
+/* THE HOME STRAIGHT IS SILENT.
+   Three weeks out the peloton stops talking. Nothing they could say at that
+   point is worth the noise, and a jibe landing on the week before the writtens
+   is the one that gets an app deleted. */
+const PIQUE_SILENCE=21;
+
+/* THE DAY'S SPEAKER — one of them says something EVERY day.
+   Left to the weekly frequencies alone, four days in five went by with nobody
+   saying anything: measured at 18% of days carrying a line, and Nicolas
+   producing exactly one distinct sentence over the whole preparation, because
+   he skips a third of his days and rarely drew a talking one on those he kept.
+   A peloton that is silent five days out of six is scenery.
+   So each day elects one, deterministically, from whoever is actually working
+   that day — falling back to the three of them on the single day of the run
+   when nobody is. The weekly frequencies still apply on top, so two or three
+   of them speaking on the same day stays common. */
+function dailySpeaker(s){
+  if(daysBetween(s,state.exam)<=PIQUE_SILENCE)return null;
+  const able=[];
+  for(const k of RKEYS){
+    const days=rivalDays(k),i=clamp(daysBetween(state.start,s),0,days.length-1);
+    const d=days[i];
+    if(d&&d.date===s&&d.sess&&d.min)able.push(k);
+  }
+  const pool=able.length?able:RKEYS.slice();
+  const r=rng(state.seed,"speaker"+s);
+  return pool[Math.floor(r()*pool.length)];
+}
+/* the hour a speaker with nothing logged that day posts at */
+function speakerHour(s){
+  const r=rng(state.seed,"spkh"+s);
+  return 9+Math.floor(r()*11);
+}
 /* a jibe day? (deterministic, independent of the sessions) */
 function isPiqueDay(k,s){
-  if(daysBetween(s,state.exam)<=21)return false; // home straight: silence
+  if(daysBetween(s,state.exam)<=PIQUE_SILENCE)return false;
+  if(dailySpeaker(s)===k)return true;
   const rw=rng(state.seed,RIVALS[k].tag+"pq"+isoWeek(s));
   const freq=k==="M"?(rw()<0.5?1:(rw()<0.8?2:3)):(k==="I"?(rw()<0.3?1:0):(rw()<0.55?1:0));
   if(freq===0)return false;
@@ -1919,7 +2053,13 @@ let _pqCache={};
 function piqueSeq(k,s){
   if(!_pqCache[k]){
     const m={};let i=0;
-    const end=todayStr()<state.exam?todayStr():state.exam;
+    /* Far enough ahead to be schedulable. The plan handed to Swift runs ten
+       days out, and a jibe the sequence has not numbered yet has no sentence
+       attached, so stopping at today made every future one unnotifiable.
+       Extending the end only appends: the numbering of every day up to today
+       is untouched, so nothing already said changes. */
+    const far=addDays(todayStr(),14);
+    const end=far<state.exam?far:state.exam;
     let d=state.start;
     const lim=Math.max(daysBetween(state.start,end),0);
     for(let j=0;j<=lim;j++){
@@ -1945,30 +2085,55 @@ function dynPique(k,s){
   const chap=chapForUnit(Math.min(ECRIT_UNITS-1,Math.floor(days[idx].cumWh/RIVALS[k].unitH)));
   const wh=fmtH(weekMinsAt(days,s));
   const dj=daysBetween(s,state.exam);
-  const r=rng(state.seed,RIVALS[k].tag+"dyn"+s);
   const T={
    M:["« "+chap+" » : plié. Au suivant.",
       wh+" cette semaine. Le plan tient, lui.",
       "J-"+dj+". La moitié des inscrits n'a pas encore ouvert un livre.",
       "Deuxième passage sur « "+chap+" ». Plus rien ne bouge.",
       "J-"+dj+" et "+wh+" au compteur. Les maths sont de mon côté.",
-      "« "+chap+" » ce soir. Pas le chapitre le plus glorieux, mais il est fait."],
+      "« "+chap+" » ce soir. Pas le chapitre le plus glorieux, mais il est fait.",
+      "Semaine à "+wh+". La suivante sera pareille.",
+      "« "+chap+" » relu ce soir. Rien à reprendre.",
+      "J-"+dj+". Le programme est couvert, maintenant il durcit.",
+      wh+" au compteur. Ce n'est pas un pic, c'est la moyenne."],
    I:["Bloc du matin : « "+chap+" ». La maison dormait encore.",
       wh+" cette semaine. Conforme au plan.",
       "J-"+dj+". Le planning couvre tout, il suffit de le suivre.",
-      "« "+chap+" » repassé avant le petit-déjeuner. Journée libre pour le reste."],
+      "« "+chap+" » repassé avant le petit-déjeuner. Journée libre pour le reste.",
+      "« "+chap+" » avant 7 h. Le reste de la journée est à eux.",
+      wh+" cette semaine. Le planning ne ment pas.",
+      "J-"+dj+". Je sais exactement ce qu'il me reste à faire.",
+      "Deuxième passage sur « "+chap+" ». Il tient.",
+      wh+" travaillées, aucune arrachée. C'est ça, la différence.",
+      "J-"+dj+" et « "+chap+" » derrière moi. On avance."],
    T:["Bon, 40 min à chercher mes écouteurs, puis « "+chap+" ». Bilan mitigé.",
       "J-"+dj+" ? On est large. Non ? Dites-moi qu'on est large.",
       wh+" cette semaine. C'est peu. Mais c'est pas rien.",
-      "J'ai ouvert « "+chap+" », j'ai refermé, j'ai rouvert. Ça compte double ?"]
+      "J'ai ouvert « "+chap+" », j'ai refermé, j'ai rouvert. Ça compte double ?",
+      "« "+chap+" » : j'ai lu le titre trois fois avant de commencer.",
+      wh+" cette semaine. Bon. On a vu pire. Chez moi.",
+      "J-"+dj+". Je viens de faire le calcul. Mauvaise idée.",
+      "J'ai fait « "+chap+" ». Enfin, la moitié. Enfin, le début.",
+      wh+" au compteur. Objectif : faire mieux que ça.",
+      "J-"+dj+" ? Attendez. Non. Vraiment ?"]
   }[k];
-  return T[Math.floor(r()*T.length)];
+  /* Cycled, not drawn. A uniform draw over ten templates collides constantly,
+     and a template built on the current chapter alone reads as the SAME
+     sentence twice when the chapter has not moved between the two. The shuffle
+     bag spreads them the way it spreads the written ones. */
+  const seq=piqueSeq(k,s);
+  return T[permIdx(k,seq<0?0:Math.floor(seq/2),T.length)];
 }
 /* ================= RENDERING ================= */
 const $=id=>document.getElementById(id);
 const TYPE_LABEL={exercices:"exercices",cours:"cours",annale:"annale chronométrée",fiches:"fiches",relecture:"relecture",oral:"oral"};
 const MAT_LABEL={fr:"Français",ma:"Maths",e2:"Épreuve 2",oral:"Oral"};
-let feedShown=25;
+/* Ten entries a page, everybody's together. A feed that grows by twenty-five
+   with every click stops being readable the week it stops being short: you
+   scroll past what you have already read to reach what you have not. A page is
+   a place you can be, and come back to. */
+const FEED_PER_PAGE=10;
+let feedPage=0;
 
 /* ---- theme ---- */
 function personHex(k){
@@ -2761,6 +2926,26 @@ function buildFeed(){
         note:rivalNoteFor(k,d.date,d.sess)});
     }
   }
+  /* The speaker still speaks on a day they logged nothing — which over a whole
+     preparation is one single day, but a guarantee with an exception is not a
+     guarantee. The line carries no duration: they are talking, not working. */
+  {
+    let d=state.start;
+    for(let i=0;i<=daysBetween(state.start,t);i++){
+      const k=dailySpeaker(d);
+      if(k){
+        const days=rivalDays(k),j=clamp(daysBetween(state.start,d),0,days.length-1);
+        const dd=days[j];
+        if(!(dd&&dd.date===d&&dd.sess&&dd.min)){
+          const note=rivalNoteFor(k,d,null),hh=speakerHour(d);
+          if(note&&(d<t||(new Date()).getHours()>=hh))
+            items.push({date:d,who:k,cls:RIVALS[k].cls,name:RIVALS[k].name,min:null,
+              hm:hh+":00",tmin:hh*60,label:null,week:null,note});
+        }
+      }
+      d=addDays(d,1);
+    }
+  }
   for(const s of state.sessions){
     const chap=s.chap?(" · "+s.chap):"";
     const st=sessTime(s);
@@ -2792,24 +2977,33 @@ function weekMinsAt(days,ref){
 }
 function renderFeed(){
   const items=buildFeed();
-  const shown=items.slice(0,feedShown);
+  const pages=Math.max(1,Math.ceil(items.length/FEED_PER_PAGE));
+  feedPage=clamp(feedPage,0,pages-1);
+  const shown=items.slice(feedPage*FEED_PER_PAGE,(feedPage+1)*FEED_PER_PAGE);
   let html="";
   for(const it of shown){
     html+='<div class="entry"><div class="avatar '+it.cls+'">'+it.name[0]+'</div><div class="body">'+
       '<div class="top"><span>'+it.name+'</span></div>'+
-      '<div class="label">'+it.label+'</div>'+
+      (it.label?'<div class="label">'+it.label+"</div>":"")+
       '<div class="meta">'+fmtDate(it.date)+(it.hm?", "+it.hm:"")
         +(it.week!=null?' · semaine '+fmtH(it.week):'')+'</div>'+
       (it.note?'<div class="note" style="border-left-color:'+personHex(it.who)+'">« '+it.note+' »</div>':'')+
       '</div>'+
       // The bin sits with the duration, on the right of the entry.
-      '<div class="dur">'+fmtH(it.min)
+      '<div class="dur">'+(it.min==null?"":fmtH(it.min))
         +(it.id?'<button class="del" data-del="'+it.id+'" title="Supprimer cette session">'+TRASH+'</button>':'')
       +'</div></div>';
   }
   if(!items.length)html='<div style="color:var(--dim);font-size:13px">Rien pour l\'instant. Le premier qui logue une session prend la tête.</div>';
   $("feed").innerHTML=html;
-  $("moreFeed").style.display=items.length>feedShown?"block":"none";
+  const pg=$("feedPager");
+  if(pages>1){
+    pg.innerHTML='<button class="pgbtn" id="feedPrev"'+(feedPage===0?" disabled":"")+">Précédent</button>"
+      +'<span class="pgn">page '+(feedPage+1)+" sur "+pages+"</span>"
+      +'<button class="pgbtn" id="feedNext"'+(feedPage>=pages-1?" disabled":"")+">Suivant</button>";
+    $("feedPrev").addEventListener("click",()=>{feedPage--;renderFeed()});
+    $("feedNext").addEventListener("click",()=>{feedPage++;renderFeed()});
+  }else pg.innerHTML="";
 }
 
 /* The headline is the count that only ever goes up. The streak keeps its
@@ -3488,31 +3682,39 @@ function buildNotifPlan(horizon){
   for(let i=0;i<=horizon;i++){
     const d=addDays(t,i);
     if(d>=state.exam)break;
+    /* WHAT THEY SAY, NEVER THAT THEY WORKED.
+       A rival logging four hours is not news: the standing already carries it,
+       and a phone buzzing twice a day to report somebody else's session asks
+       for attention it cannot repay. What is worth an interruption is the line
+       they wrote — the only thing in the peloton that is addressed to you. */
     const picks=[];
     for(const k of RKEYS){
       const days=rivalDays(k);
       const idx=clamp(daysBetween(state.start,d),0,days.length-1);
-      // today (i=0): a session already gone by would be rejected by Swift
-      // anyway — dropping it here frees its slot for a rival whose session
-      // is still ahead (picks is capped at 2)
-      if(days[idx]&&days[idx].sess&&!(i===0&&sessDue(days[idx],t)))picks.push({k,day:days[idx]});
+      const day=days[idx];
+      if(!day||day.date!==d)continue;
+      const worked=!!(day.sess&&day.min);
+      const note=rivalNoteFor(k,d,worked?day.sess:null);
+      if(note)picks.push({k,day,note,worked});
     }
     picks.sort((a,b)=>"MIT".indexOf(a.k)-"MIT".indexOf(b.k));
     picks.slice(0,2).forEach(p=>{
-      /* Rings when the session ENDS — the same instant the feed line arrives,
-         so there is no seam between the two. One that runs past midnight rings
-         the next morning, on the day its last minute falls. */
-      const hh=p.day.sess.h!=null?p.day.sess.h:18,mm=p.day.sess.m!=null?p.day.sess.m:0;
-      const end=hh*60+mm+p.day.min,e=end%1440;
-      const ring=end>=1440?addDays(d,1):d;
-      /* A session whose last minute falls outside the window gets no reminder
-         at all. Ringing at its start instead would put the notification back
-         in front of the feed line it announces, which is the seam this rule
-         exists to close. */
+      /* It lands when the line lands: with the session that carries it — at
+         its END, the same instant the feed shows it — or at the speaker's own
+         hour on a day they logged nothing. One running past midnight rings the
+         next morning, on the day its last minute falls, and one whose moment
+         falls outside the window gets no reminder rather than an early one. */
+      let ring=d,e;
+      if(p.worked){
+        const hh=p.day.sess.h!=null?p.day.sess.h:18,mm=p.day.sess.m!=null?p.day.sess.m:0;
+        const end=hh*60+mm+p.day.min;e=end%1440;
+        if(end>=1440)ring=addDays(d,1);
+      }else e=speakerHour(d)*60;
       if(ring>addDays(t,horizon)||ring>=state.exam)return;
+      // Swift drops a same-day reminder already gone by, in silence
+      if(ring===t&&e<=(new Date()).getHours()*60+(new Date()).getMinutes())return;
       plan.push({at:ring+"T"+pad(Math.floor(e/60))+":"+pad(e%60),
-        title:RIVALS[p.k].name+" — "+fmtH(p.day.min),
-        body:p.day.sess.chap+" ("+TYPE_LABEL[p.day.sess.type]+")"});
+        title:RIVALS[p.k].name,body:p.note});
     });
   }
   /* YOUR OWN APPOINTMENTS.
@@ -3763,7 +3965,6 @@ function wireInterface(){
   $("pauseBtn").addEventListener("click",pauseTimer);
   $("sheetCancel").addEventListener("click",closeSheet);
   $("sheetSave").addEventListener("click",saveSheet);
-  $("moreFeed").addEventListener("click",()=>{feedShown+=25;renderFeed()});
   $("progList").addEventListener("click",onProgClick);
 
   $("feed").addEventListener("click",e=>{
@@ -3831,6 +4032,7 @@ W.__DUEL={userHours,rivalHours,rivalDays,userMetrics,targetCum,refTotal,targetWe
   rivalWeekPlan,restLegit,restLeft,dayHolds,rdvKept,rdvTarget,rdvSealed,
   DAY_END_H,dayEndAt,pastDayEnd,dayShortfall,
   checkMilestones,RIVALS,RKEYS,rivalList,sessTime,sessDue,hmMinus,buildFeed,
+  dailySpeaker,rivalNoteFor,isPiqueDay,FEED_PER_PAGE,
   standingProj,rivalProj,
   weekPrescription,userRank,weekNarrative,
   project,emptyState,LEGACY,
