@@ -87,9 +87,21 @@ struct PelotonProvider: TimelineProvider {
         guard !plan.isEmpty else { return [] }
 
         var out: [PelotonEntry] = []
-        for reading in plan {
+        for (i, reading) in plan.enumerated() {
             guard let date = Self.formatter.date(from: reading.at) else { continue }
-            out.append(PelotonEntry(date: date, min: reading.min,
+            /* TODAY'S ENTRY IS STAMPED NOW, NOT AT MIDNIGHT.
+               Every reading is written for a local midnight, and today's is the
+               only one that changes during the day. Left on 00:00 it keeps the
+               same date for sixteen hours — and WidgetKit caches a rendered
+               tile against its entry's date, so a fresh timeline carrying new
+               minutes was being answered with the picture drawn at midnight,
+               when there was no commitment yet and nothing worked. The
+               extension read the right number all day and the desktop showed
+               "0 min".
+               Stamping it at generation time gives every refresh a date the
+               cache has never seen, which is what forces the repaint. */
+            out.append(PelotonEntry(date: i == 0 ? Swift.max(date, Date()) : date,
+                                    min: reading.min,
                                     target: reading.target, examDays: reading.examDays))
         }
         guard let last = out.last else { return [] }
